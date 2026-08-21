@@ -2,7 +2,7 @@
  * Owner notification via Resend (email).
  * Falls back to console.log if RESEND_API_KEY is not set.
  */
-import { ENV } from "./env";
+import { ENV } from "./env.js";
 
 type NotificationPayload = {
   title: string;

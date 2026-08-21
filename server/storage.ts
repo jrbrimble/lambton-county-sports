@@ -3,7 +3,7 @@
  * Replaces the Manus Forge storage with Supabase Storage.
  */
 import { createClient } from "@supabase/supabase-js";
-import { ENV } from "./_core/env";
+import { ENV } from "./_core/env.js";
 
 const BUCKET = "ad-images";
 
