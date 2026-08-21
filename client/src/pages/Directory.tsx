@@ -513,8 +513,8 @@ export default function Directory() {
         <div className="max-w-6xl mx-auto px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch min-h-[450px]">
             {/* Text Column - Increased width and font size */}
-            <div className="lg:col-span-7 flex flex-col justify-center py-8 pr-4">
-              <h1 className="font-display text-4xl md:text-5xl lg:text-[4.25rem] font-extrabold mb-6 leading-[1.1] tracking-tight text-white drop-shadow-md">
+            <div className="lg:col-span-7 flex flex-col justify-center py-8 lg:pr-4 text-center lg:text-left items-center lg:items-start">
+              <h1 className="font-display text-5xl md:text-6xl lg:text-[4.25rem] font-extrabold mb-6 leading-[1.1] tracking-tight text-white drop-shadow-md">
                 Find Every Kids Sport Signup in Lambton County
               </h1>
               <p className="text-xl md:text-2xl text-blue-100 mb-10 font-medium leading-relaxed max-w-2xl">
