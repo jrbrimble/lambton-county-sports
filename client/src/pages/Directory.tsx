@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronRight, MapPin, Calendar, Users, Search, X, Info, Filter, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, Users, Search, X, Info, Filter, ArrowUp, ArrowUpDown , BellRing} from "lucide-react";
 import { useLocation } from "wouter";
 
 const SPORTS = [
@@ -467,6 +467,16 @@ export default function Directory() {
                   </button>
                 } 
               />
+              
+              <HighLevelModal 
+                formId="become_sponsor" 
+                title="Become a Community Sponsor" 
+                trigger={
+                  <button className="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors">
+                    Become A Sponsor
+                  </button>
+                } 
+              />
             </div>
           </div>
           
@@ -484,9 +494,10 @@ export default function Directory() {
                 const el = document.getElementById("alerts");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
-              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-[13px] uppercase tracking-wider px-6 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-2"
             >
-              Get Alerts
+              <BellRing className="w-4 h-4 mb-[2px]" />
+              Never Miss A Signup
             </button>
           </div>
         </div>
