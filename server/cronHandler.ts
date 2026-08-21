@@ -4,9 +4,9 @@ import {
   getProgramsForCronCheck,
   updateCronLastRun,
   updateProgram,
-} from "./db";
-import { notifyOwner } from "./_core/notification";
-import { ENV } from "./_core/env";
+} from "./db.js";
+import { notifyOwner } from "./_core/notification.js";
+import { ENV } from "./_core/env.js";
 
 const TRACKED_FIELDS = [
   "registrationOpenDate",

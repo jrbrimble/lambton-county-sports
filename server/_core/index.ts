@@ -5,10 +5,10 @@ dotenv.config({ path: ".env.local", override: true });
 import express from "express";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../routers";
-import { createContext } from "./context";
-import { registerAuthRoutes } from "./auth";
-import { monthlyUrlCheckHandler } from "../cronHandler";
+import { appRouter } from "../routers.js";
+import { createContext } from "./context.js";
+import { registerAuthRoutes } from "./auth.js";
+import { monthlyUrlCheckHandler } from "../cronHandler.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 

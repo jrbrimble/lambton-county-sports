@@ -5,11 +5,11 @@
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import { SignJWT, jwtVerify } from "jose";
-import { COOKIE_NAME, ONE_YEAR_MS, UNAUTHED_ERR_MSG } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS, UNAUTHED_ERR_MSG } from "../../shared/const.js";
 import { parse as parseCookieHeader } from "cookie";
-import * as db from "../db";
-import { ENV } from "./env";
-import type { User } from "../../drizzle/schema";
+import * as db from "../db.js";
+import { ENV } from "./env.js";
+import type { User } from "../../drizzle/schema.js";
 
 function getSecretKey() {
   if (!ENV.cookieSecret) throw new Error("JWT_SECRET env var is not set");

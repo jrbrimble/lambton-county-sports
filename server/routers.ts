@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { router, publicProcedure, adminProcedure } from "./_core/trpc";
-import { getSessionCookieOptions } from "./_core/auth";
+import { router, publicProcedure, adminProcedure } from "./_core/trpc.js";
+import { getSessionCookieOptions } from "./_core/auth.js";
 import {
   listPrograms,
   listAllPrograms,
@@ -18,8 +18,8 @@ import {
   deleteAdSlot,
   getCronConfig,
   updateCronLastRun,
-} from "./db";
-import { ENV } from "./_core/env";
+} from "./db.js";
+import { ENV } from "./_core/env.js";
 
 const COOKIE_NAME = "lcs_session";
 

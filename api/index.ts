@@ -1,10 +1,10 @@
 import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../server/routers";
-import { createContext } from "../server/_core/context";
-import { registerAuthRoutes } from "../server/_core/auth";
-import { monthlyUrlCheckHandler } from "../server/cronHandler";
+import { appRouter } from "../server/routers.js";
+import { createContext } from "../server/_core/context.js";
+import { registerAuthRoutes } from "../server/_core/auth.js";
+import { monthlyUrlCheckHandler } from "../server/cronHandler.js";
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));

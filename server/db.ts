@@ -17,7 +17,7 @@ import {
   programChanges,
   sportsPrograms,
   users,
-} from "../drizzle/schema";
+} from "../drizzle/schema.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
