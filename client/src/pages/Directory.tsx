@@ -436,34 +436,38 @@ export default function Directory() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-[#1B3A6B] to-[#12284D] text-white pt-28 pb-16 md:pb-24 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 p-6 z-30 flex justify-between items-center max-w-6xl mx-auto w-full">
-          <img
-            src="/lambton-county-sports-logo.png"
-            alt="Lambton County Sports"
-            className="h-24 w-auto bg-white/95 p-3.5 rounded-xl shadow-sm"
-          />
-          <div className="flex items-center gap-3">
+      {/* Top Navigation Bar */}
+      <nav className="w-full bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 h-20 flex justify-between items-center">
+          <div className="flex items-center gap-4 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <img src="/lambton-county-sports-logo.png" alt="Lambton County Sports" className="h-12 w-auto" />
+            <span className="font-display font-bold text-xl text-slate-800 hidden sm:block tracking-tight">Lambton County Sports</span>
+          </div>
+          
+          <div className="flex items-center gap-4">
             <HighLevelModal 
               formId="submit_registration" 
               title="Submit a Registration" 
               trigger={
-                <button className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm px-4 py-2.5 rounded-lg backdrop-blur-sm transition-all shadow-sm">
-                  Add a Program
+                <button className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-5 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-2">
+                  <span className="text-lg leading-none font-light mb-[2px]">+</span> Add a Program
                 </button>
               } 
             />
             {user?.role === "admin" && (
               <button
                 onClick={() => navigate("/admin")}
-                className="text-white hover:text-green-300 font-bold text-sm uppercase tracking-wider transition-colors bg-black/20 px-4 py-2.5 rounded-lg backdrop-blur-sm"
+                className="text-slate-500 hover:text-slate-800 font-bold text-sm uppercase tracking-wider transition-colors px-3 py-2 rounded-lg hover:bg-slate-100"
               >
                 Admin Panel
               </button>
             )}
           </div>
         </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-[#1B3A6B] to-[#12284D] text-white pt-12 lg:pt-16 pb-16 md:pb-24 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{
           backgroundImage: `radial-gradient(circle, #fff 1.5px, transparent 1.5px)`,
           backgroundSize: '24px 24px',
