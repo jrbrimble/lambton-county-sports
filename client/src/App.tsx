@@ -8,6 +8,7 @@ import Directory from "./pages/Directory";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Calendar from "./pages/Calendar";
+import Swap from "./pages/Swap";
 import Navbar from "./components/Navbar";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Directory} />
       <Route path="/calendar" component={Calendar} />
+      <Route path="/swap" component={Swap} />
       <Route path="/admin" component={Admin} />
       <Route path="/login" component={Login} />
       <Route path="/404" component={NotFound} />

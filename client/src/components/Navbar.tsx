@@ -66,6 +66,15 @@ export default function Navbar() {
             >
               Season Calendar
             </button>
+            
+            <button 
+              onClick={() => navigate("/swap")}
+              className={`font-semibold text-sm transition-colors ${
+                location === "/swap" ? "text-blue-600" : "text-slate-600 hover:text-blue-600"
+              }`}
+            >
+              Equipment Swap
+            </button>
           </div>
         </div>
         

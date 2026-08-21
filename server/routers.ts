@@ -18,6 +18,10 @@ import {
   deleteAdSlot,
   getCronConfig,
   updateCronLastRun,
+  listActiveSwapListings,
+  createSwapListing,
+  deleteSwapListing,
+  listAllSwapListings,
 } from "./db.js";
 import { ENV } from "./_core/env.js";
 
@@ -168,6 +172,53 @@ export const appRouter = router({
         await updateCronLastRun("monthly-url-check", input.status);
         return { success: true };
       }),
+  }),
+
+  // ── Swap Listings ────────────────────────────────────────────────────────────
+  swap: router({
+    list: publicProcedure
+      .input(
+        z.object({
+          sport: z.string().optional(),
+          townArea: z.string().optional(),
+          condition: z.string().optional(),
+          search: z.string().optional(),
+        }).optional()
+      )
+      .query(({ input }) => listActiveSwapListings(input ?? {})),
+
+    create: publicProcedure
+      .input(
+        z.object({
+          sportCategory: z.string().min(1),
+          itemName: z.string().min(1).max(256),
+          description: z.string().max(2000).optional(),
+          sizeInfo: z.string().max(128).optional(),
+          condition: z.enum(["like_new", "good", "fair", "worn"]),
+          price: z.number().int().min(0),
+          imageUrl: z.string().optional(),
+          imageKey: z.string().optional(),
+          townArea: z.string().max(128).optional(),
+          posterName: z.string().min(1).max(128),
+          posterEmail: z.string().email().max(320),
+          posterPhone: z.string().max(32).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        const id = await createSwapListing({ ...input, expiresAt });
+        return { id };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSwapListing(input.id);
+        return { success: true };
+      }),
+
+    listAll: adminProcedure.query(() => listAllSwapListings()),
   }),
 });
 

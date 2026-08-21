@@ -106,3 +106,29 @@ export const cronConfig = pgTable("cron_config", {
 
 export type CronConfig = typeof cronConfig.$inferSelect;
 export type InsertCronConfig = typeof cronConfig.$inferInsert;
+
+// ── Equipment Swap Listings ────────────────────────────────────────────────────
+
+export const itemConditionEnum = pgEnum("item_condition", ["like_new", "good", "fair", "worn"]);
+
+export const swapListings = pgTable("swap_listings", {
+  id: serial("id").primaryKey(),
+  sportCategory: varchar("sport_category", { length: 128 }).notNull(),
+  itemName: varchar("item_name", { length: 256 }).notNull(),
+  description: text("description"),
+  sizeInfo: varchar("size_info", { length: 128 }),
+  condition: itemConditionEnum("condition").notNull(),
+  price: integer("price").default(0).notNull(), // cents, 0 = free
+  imageUrl: text("image_url"),
+  imageKey: text("image_key"),
+  townArea: varchar("town_area", { length: 128 }),
+  posterName: varchar("poster_name", { length: 128 }).notNull(),
+  posterEmail: varchar("poster_email", { length: 320 }).notNull(),
+  posterPhone: varchar("poster_phone", { length: 32 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export type SwapListing = typeof swapListings.$inferSelect;
+export type InsertSwapListing = typeof swapListings.$inferInsert;
