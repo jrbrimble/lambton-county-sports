@@ -1,4 +1,4 @@
-﻿import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
@@ -7,11 +7,13 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Directory from "./pages/Directory";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import Calendar from "./pages/Calendar";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Directory} />
+      <Route path="/calendar" component={Calendar} />
       <Route path="/admin" component={Admin} />
       <Route path="/login" component={Login} />
       <Route path="/404" component={NotFound} />

@@ -477,6 +477,13 @@ export default function Directory() {
                   </button>
                 } 
               />
+              
+              <button 
+                onClick={() => navigate("/calendar")}
+                className="text-slate-600 hover:text-blue-600 font-semibold text-sm transition-colors"
+              >
+                Season Calendar
+              </button>
             </div>
           </div>
           

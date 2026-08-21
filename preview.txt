@@ -1,0 +1,80 @@
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+
+      {/* Floating Back to Top Button */}
+      {showScrollTop && (
+        <button 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 bg-[#4A8C2A] text-white p-3 rounded-full shadow-2xl hover:bg-[#3A7A1A] transition-colors border-2 border-white/20"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Mobile Filter Button */}
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <button 
+          onClick={() => setShowMobileFilters(true)}
+          className="bg-[#1B3A6B] text-white px-8 py-3.5 rounded-full font-bold shadow-2xl flex items-center gap-2 border-2 border-white/20 text-sm tracking-wide"
+        >
+          <Filter className="w-4 h-4" /> Filters
+          {activeFilters.length > 0 && (
+            <span className="ml-1 bg-white text-[#1B3A6B] rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black">
+              {activeFilters.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Filter Overlay */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 bg-black/60 z-50 lg:hidden flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-6 pb-12 animate-in slide-in-from-bottom max-h-[85vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display font-bold text-xl text-slate-800">Refine Search</h3>
+              <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-slate-100 rounded-full">
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+            <FilterPanel />
+            <div className="mt-8 flex gap-3">
+              <button onClick={clearAllFilters} className="flex-1 py-3 text-slate-600 font-bold bg-slate-100 rounded-xl">Clear All</button>
+              <button onClick={() => setShowMobileFilters(false)} className="flex-1 py-3 bg-[#4A8C2A] text-white font-bold rounded-xl shadow-lg">Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Program Details Modal */}
+      <Dialog.Root open={!!selectedProgram} onOpenChange={(open) => !open && setSelectedProgram(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 z-50 backdrop-blur-sm" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-0 w-[95vw] max-w-lg z-50 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            {selectedProgram && (
+              <>
+                <div className="bg-[#1B3A6B] p-6 text-white relative">
+                  <Dialog.Title className="font-display text-2xl font-bold mb-1 pr-8">
+                    {selectedProgram.sportName}
+                  </Dialog.Title>
+                  <p className="text-blue-200 font-medium">{selectedProgram.organization}</p>
+                  <Dialog.Close asChild>
+                    <button className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </Dialog.Close>
+                </div>
+                
+                <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                  
+                  {/* Status Box */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex gap-4">
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Registration</p>
+                      <p className="font-semibold text-slate-800">
+                         {selectedProgram.registrationOpenDate ? new Date(selectedProgram.registrationOpenDate).toLocaleDateString() : "TBD"} 
+                         {" - "}
+                         {selectedProgram.registrationCloseDate ? new Date(selectedProgram.registrationCloseDate).toLocaleDateString() : "TBD"}
+                      </p>
+                    </div>
+                    <div className="flex-1 border-l border-slate-200 pl-4">
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Season Starts</p>
+                      <p className="font-semibold text-slate-800">
