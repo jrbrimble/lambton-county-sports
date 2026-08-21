@@ -110,31 +110,6 @@ export default function SeasonCalendar() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       
-      {/* Top Navigation */}
-      <nav className="w-full bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate("/")}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <img src="/lambton-county-sports-logo.png" alt="Lambton County Sports" className="h-10 w-auto" />
-              <span className="font-display font-bold text-xl text-slate-800 hidden sm:block tracking-tight group-hover:text-blue-600 transition-colors">Lambton County Sports</span>
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate("/")}
-              className="text-slate-500 hover:text-slate-800 font-semibold text-sm transition-colors flex items-center gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back to Directory
-            </button>
-          </div>
-        </div>
-      </nav>
-
       {/* Page Header */}
       <div className="bg-gradient-to-br from-[#1B3A6B] to-[#12284D] text-white py-12 px-6">
         <div className="max-w-7xl mx-auto">

@@ -8,6 +8,7 @@ import Directory from "./pages/Directory";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Calendar from "./pages/Calendar";
+import Navbar from "./components/Navbar";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-right" richColors />
+          <Navbar />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
