@@ -45,12 +45,12 @@ export default function Navbar() {
             <span className="font-display font-bold text-xl text-slate-800 hidden sm:block tracking-tight">Lambton County Sports</span>
           </div>
           
-          <div className="hidden md:flex items-center gap-6 border-l border-slate-200 pl-8">
+          <div className="hidden md:flex items-center gap-4 lg:gap-6 border-l border-slate-200 pl-4 lg:pl-8">
             <HighLevelModal 
               formId="submit_registration" 
               title="Submit a Registration" 
               trigger={
-                <button className={`font-semibold text-sm transition-colors ${
+                <button className={`font-semibold text-sm transition-colors whitespace-nowrap ${
                   location === "/" ? "text-slate-600 hover:text-blue-600" : "text-slate-600 hover:text-blue-600"
                 }`}>
                   Submit A Program
@@ -60,7 +60,7 @@ export default function Navbar() {
             
             <button 
               onClick={() => navigate("/calendar")}
-              className={`font-semibold text-sm transition-colors ${
+              className={`font-semibold text-sm transition-colors whitespace-nowrap ${
                 location === "/calendar" ? "text-blue-600" : "text-slate-600 hover:text-blue-600"
               }`}
             >
@@ -69,7 +69,7 @@ export default function Navbar() {
             
             <button 
               onClick={() => navigate("/swap")}
-              className={`font-semibold text-sm transition-colors ${
+              className={`font-semibold text-sm transition-colors whitespace-nowrap ${
                 location === "/swap" ? "text-blue-600" : "text-slate-600 hover:text-blue-600"
               }`}
             >
@@ -78,20 +78,20 @@ export default function Navbar() {
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
           {user ? (
             <button
               onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}
-              className={`font-bold text-sm uppercase tracking-wider transition-colors px-3 py-2 rounded-lg hidden md:block ${
+              className={`font-bold text-sm uppercase tracking-wider transition-colors px-2 lg:px-3 py-2 rounded-lg hidden md:block whitespace-nowrap ${
                 location === "/admin" || location === "/dashboard" ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
               }`}
             >
-              {user.role === "admin" ? "Admin Panel" : "My Dashboard"}
+              {user.role === "admin" ? "Admin" : "Dashboard"}
             </button>
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className="font-bold text-sm text-slate-500 hover:text-slate-800 hidden md:block transition-colors"
+              className="font-bold text-sm text-slate-500 hover:text-slate-800 hidden md:block transition-colors whitespace-nowrap px-2"
             >
               Sign In
             </button>
@@ -109,9 +109,9 @@ export default function Navbar() {
                 }, 500);
               }
             }}
-            className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-[13px] uppercase tracking-wider px-6 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+            className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-[11px] lg:text-[13px] uppercase tracking-wider px-3 lg:px-6 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-1.5 lg:gap-2 whitespace-nowrap"
           >
-            <BellRing className="w-4 h-4 mb-[2px]" />
+            <BellRing className="w-3.5 h-3.5 lg:w-4 lg:h-4 lg:mb-[2px]" />
             Never Miss A Signup
           </button>
         </div>

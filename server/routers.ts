@@ -110,6 +110,7 @@ export const appRouter = router({
         });
         return await updateProgram(input.id, data);
       }),
+    
     delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
         await deleteProgram(input.id);
         return { success: true };
@@ -224,6 +225,26 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    adminUpdate: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          sportCategory: z.string().min(1),
+          itemName: z.string().min(1).max(256),
+          description: z.string().max(2000).optional(),
+          sizeInfo: z.string().max(128).optional(),
+          condition: z.enum(["like_new", "good", "fair", "worn"]),
+          price: z.number().int().min(0),
+          townArea: z.string().max(128).optional(),
+          status: z.enum(["active", "completed", "archived"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const { updateSwapListingAsAdmin } = await import("./db.js");
+        await updateSwapListingAsAdmin(id, data);
+        return { success: true };
+      }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {

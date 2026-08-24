@@ -480,6 +480,14 @@ export async function updateSwapListingStatus(id: number, userId: number, status
     .where(and(eq(swapListings.id, id), eq(swapListings.userId, userId)));
 }
 
+
+export async function updateSwapListingAsAdmin(id: number, data: Partial<InsertSwapListing> & { status?: string }): Promise<void> {
+  const db = getDb();
+  await db
+    .update(swapListings)
+    .set(data)
+    .where(eq(swapListings.id, id));
+}
 export async function deleteSwapListing(id: number): Promise<void> {
   const db = getDb();
   // Admin only delete
