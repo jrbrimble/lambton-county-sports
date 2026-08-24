@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { router, publicProcedure, protectedProcedure, adminProcedure } from "./_core/trpc.js";
+import {
+  router,
+  publicProcedure,
+  protectedProcedure,
+  adminProcedure,
+} from "./_core/trpc.js";
 import { getSessionCookieOptions } from "./_core/auth.js";
 import {
   listPrograms,
@@ -31,7 +36,7 @@ const COOKIE_NAME = "lcs_session";
 
 export const appRouter = router({
   auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
+    me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req as any);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -42,76 +47,92 @@ export const appRouter = router({
   programs: router({
     list: publicProcedure
       .input(
-        z.object({
-          search: z.string().optional(),
-          sport: z.string().optional(),
-          townArea: z.string().optional(),
-          status: z.enum(["open", "upcoming", "closed"]).optional(),
-          ageMin: z.number().optional(),
-          ageMax: z.number().optional(),
-        }).optional()
+        z
+          .object({
+            search: z.string().optional(),
+            sport: z.string().optional(),
+            townArea: z.string().optional(),
+            status: z.enum(["open", "upcoming", "closed"]).optional(),
+            ageMin: z.number().optional(),
+            ageMax: z.number().optional(),
+          })
+          .optional()
       )
       .query(async ({ input }) => {
         let filtered = await listPrograms();
         if (input?.search) {
           const q = input.search.toLowerCase();
           filtered = filtered.filter(
-            (p) =>
+            p =>
               p.sportName.toLowerCase().includes(q) ||
               p.organization.toLowerCase().includes(q) ||
               p.townArea?.toLowerCase().includes(q)
           );
         }
         if (input?.sport) {
-          filtered = filtered.filter((p) => p.sportName === input.sport);
+          filtered = filtered.filter(p => p.sportName === input.sport);
         }
         if (input?.townArea) {
-          filtered = filtered.filter((p) => p.townArea === input.townArea);
+          filtered = filtered.filter(p => p.townArea === input.townArea);
         }
         if (input?.ageMin !== undefined && input?.ageMax !== undefined) {
-          filtered = filtered.filter((p) => {
+          filtered = filtered.filter(p => {
             if (p.ageMin === null || p.ageMax === null) return true;
             return p.ageMax >= input.ageMin! && p.ageMin <= input.ageMax!;
           });
         }
         if (input?.status) {
           const now = new Date();
-          filtered = filtered.filter((p) => {
-            const open = p.registrationOpenDate ? new Date(p.registrationOpenDate) : null;
-            const close = p.registrationCloseDate ? new Date(p.registrationCloseDate) : null;
-            if (input.status === "open") return open && close && open <= now && now <= close;
+          filtered = filtered.filter(p => {
+            const open = p.registrationOpenDate
+              ? new Date(p.registrationOpenDate)
+              : null;
+            const close = p.registrationCloseDate
+              ? new Date(p.registrationCloseDate)
+              : null;
+            if (input.status === "open")
+              return open && close && open <= now && now <= close;
             if (input.status === "upcoming") return open && open > now;
-            if (input.status === "closed") return !open || (close && now > close);
+            if (input.status === "closed")
+              return !open || (close && now > close);
             return true;
           });
         }
         return filtered;
       }),
     listAll: adminProcedure.query(async () => await listAllPrograms()),
-    create: adminProcedure
-      .input(z.any())
-      .mutation(async ({ input }) => {
-        const data: any = { ...input };
-        ["registrationOpenDate", "registrationCloseDate", "programStartDate", "programEndDate"].forEach((f) => {
+    create: adminProcedure.input(z.any()).mutation(async ({ input }) => {
+      const data: any = { ...input };
+      [
+        "registrationOpenDate",
+        "registrationCloseDate",
+        "programStartDate",
+        "programEndDate",
+      ].forEach(f => {
+        if (data[f]) data[f] = new Date(data[f]);
+        else data[f] = null;
+      });
+      return await createProgram(data);
+    }),
+    update: adminProcedure.input(z.any()).mutation(async ({ input }) => {
+      const data: any = { ...input };
+      [
+        "registrationOpenDate",
+        "registrationCloseDate",
+        "programStartDate",
+        "programEndDate",
+      ].forEach(f => {
+        if (data[f] !== undefined) {
           if (data[f]) data[f] = new Date(data[f]);
           else data[f] = null;
-        });
-        return await createProgram(data);
-      }),
-    update: adminProcedure
-      .input(z.any())
+        }
+      });
+      return await updateProgram(input.id, data);
+    }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        const data: any = { ...input };
-        ["registrationOpenDate", "registrationCloseDate", "programStartDate", "programEndDate"].forEach((f) => {
-          if (data[f] !== undefined) {
-            if (data[f]) data[f] = new Date(data[f]);
-            else data[f] = null;
-          }
-        });
-        return await updateProgram(input.id, data);
-      }),
-    
-    delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
         await deleteProgram(input.id);
         return { success: true };
       }),
@@ -119,7 +140,9 @@ export const appRouter = router({
 
   changes: router({
     listPending: adminProcedure.query(async () => await listPendingChanges()),
-    pendingCount: adminProcedure.query(async () => ({ count: await countPendingChanges() })),
+    pendingCount: adminProcedure.query(async () => ({
+      count: await countPendingChanges(),
+    })),
     approve: adminProcedure
       .input(z.object({ changeId: z.number() }))
       .mutation(async ({ input, ctx }) => {
@@ -136,7 +159,16 @@ export const appRouter = router({
 
   ads: router({
     listActive: publicProcedure
-      .input(z.object({ position: z.enum(["banner_top", "banner_bottom", "sidebar_card", "inline_card"]) }))
+      .input(
+        z.object({
+          position: z.enum([
+            "banner_top",
+            "banner_bottom",
+            "sidebar_card",
+            "inline_card",
+          ]),
+        })
+      )
       .query(async ({ input }) => await listActiveAdSlots(input.position)),
     listAll: adminProcedure.query(async () => await listAllAdSlots()),
     create: adminProcedure
@@ -145,26 +177,26 @@ export const appRouter = router({
     update: adminProcedure
       .input(z.any())
       .mutation(async ({ input }) => await updateAdSlot(input.id, input)),
-    delete: adminProcedure.input(z.object({ id: z.number() })).mutation(async ({ input }) => {
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
         await deleteAdSlot(input.id);
         return { success: true };
       }),
-    uploadImage: adminProcedure
-      .input(z.any())
-      .mutation(async () => {
-        return { url: "/placeholder-ad.png", key: "placeholder" };
-      })
+    uploadImage: adminProcedure.input(z.any()).mutation(async () => {
+      return { url: "/placeholder-ad.png", key: "placeholder" };
+    }),
   }),
 
   cron: router({
     run: adminProcedure.mutation(async () => {
-      const url = `http://127.0.0.1:${ENV.port}/api/cron/monthly-url-check`;
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { 'x-cron-secret': ENV.cronSecret }
-      });
-      if (!res.ok) throw new Error('Cron execution failed: ' + await res.text());
-      return res.json();
+      const { runMonthlyUrlCheck } = await import("./cronHandler.js");
+      try {
+        const result = await runMonthlyUrlCheck();
+        return { ok: true, ...result };
+      } catch (err: any) {
+        throw new Error("Cron execution failed: " + err.message);
+      }
     }),
     status: adminProcedure.query(async () => {
       return (await getCronConfig("monthly-url-check")) ?? null;
@@ -177,21 +209,24 @@ export const appRouter = router({
       }),
   }),
 
-  //  Swap Listings 
+  //  Swap Listings
   swap: router({
     list: publicProcedure
       .input(
-        z.object({
-          sport: z.string().optional(),
-          townArea: z.string().optional(),
-          condition: z.string().optional(),
-          search: z.string().optional(),
-        }).optional()
+        z
+          .object({
+            sport: z.string().optional(),
+            townArea: z.string().optional(),
+            condition: z.string().optional(),
+            search: z.string().optional(),
+          })
+          .optional()
       )
       .query(({ input }) => listActiveSwapListings(input ?? {})),
 
-    myListings: protectedProcedure
-      .query(({ ctx }) => listUserSwapListings(ctx.user.id)),
+    myListings: protectedProcedure.query(({ ctx }) =>
+      listUserSwapListings(ctx.user.id)
+    ),
 
     create: protectedProcedure
       .input(
@@ -210,16 +245,21 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 60); // Extended to 60 days
-        const id = await createSwapListing({ 
-          ...input, 
+        const id = await createSwapListing({
+          ...input,
           userId: ctx.user.id,
-          expiresAt 
+          expiresAt,
         });
         return { id };
       }),
 
     updateStatus: protectedProcedure
-      .input(z.object({ id: z.number(), status: z.enum(["active", "completed", "archived"]) }))
+      .input(
+        z.object({
+          id: z.number(),
+          status: z.enum(["active", "completed", "archived"]),
+        })
+      )
       .mutation(async ({ input, ctx }) => {
         await updateSwapListingStatus(input.id, ctx.user.id, input.status);
         return { success: true };
@@ -255,13 +295,16 @@ export const appRouter = router({
     listAll: adminProcedure.query(() => listAllSwapListings()),
   }),
 
-  //  Users Management (Admin) 
+  //  Users Management (Admin)
   users: router({
     list: adminProcedure.query(async () => {
       const { getDb } = await import("./db.js");
       const { users } = await import("../drizzle/schema.js");
       const { desc } = await import("drizzle-orm");
-      return (await getDb()).select().from(users).orderBy(desc(users.createdAt));
+      return (await getDb())
+        .select()
+        .from(users)
+        .orderBy(desc(users.createdAt));
     }),
     updateRole: adminProcedure
       .input(z.object({ id: z.number(), role: z.enum(["user", "admin"]) }))
@@ -269,7 +312,10 @@ export const appRouter = router({
         const { getDb } = await import("./db.js");
         const { users } = await import("../drizzle/schema.js");
         const { eq } = await import("drizzle-orm");
-        await (await getDb()).update(users).set({ role: input.role }).where(eq(users.id, input.id));
+        await (await getDb())
+          .update(users)
+          .set({ role: input.role })
+          .where(eq(users.id, input.id));
         return { success: true };
       }),
     delete: adminProcedure
