@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [contactPref, setContactPref] = useState("email"); // "email", "phone", "both"
   const [loading, setLoading] = useState(false);
   const utils = trpc.useUtils();
 
@@ -24,8 +26,13 @@ export default function Login() {
 
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-      const body: Record<string, string> = { email, password };
-      if (mode === "register" && name) body.name = name;
+      const body: Record<string, string | boolean> = { email, password };
+      if (mode === "register") {
+        if (name) body.name = name;
+        if (phone) body.phone = phone;
+        body.showEmail = (contactPref === "email" || contactPref === "both");
+        body.showPhone = (contactPref === "phone" || contactPref === "both");
+      }
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -43,7 +50,15 @@ export default function Login() {
 
       await utils.auth.me.invalidate();
       toast.success(mode === "login" ? "Welcome back!" : "Account created!");
-      navigate("/admin");
+      // Check if user is admin after login, else go to dashboard
+      const meRes = await fetch("/api/auth/me");
+      if (meRes.ok) {
+        const me = await meRes.json();
+        if (me?.role === "admin") navigate("/admin");
+        else navigate("/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       toast.error("Network error — please try again");
     } finally {
@@ -64,24 +79,54 @@ export default function Login() {
         </div>
 
         <h1 className="text-2xl font-bold text-center text-[#1B3A6B] mb-1 normal-case tracking-normal">
-          {mode === "login" ? "Admin Login" : "Create Account"}
+          {mode === "login" ? "Sign In" : "Create Account"}
         </h1>
         <p className="text-center text-sm text-[#666] mb-6">
           Lambton County Sports Directory
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "register" && (
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="mt-1"
-              />
+                    {mode === "register" && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="519-555-1234"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label>Public Contact Preference</Label>
+                <p className="text-xs text-[#666] mb-2">How should buyers contact you for Equipment Swap listings?</p>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="contactPref" value="email" checked={contactPref === "email"} onChange={() => setContactPref("email")} /> Email Only
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="contactPref" value="phone" checked={contactPref === "phone"} onChange={() => setContactPref("phone")} /> Phone Only
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="radio" name="contactPref" value="both" checked={contactPref === "both"} onChange={() => setContactPref("both")} /> Both
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 

@@ -34,10 +34,10 @@ export function getDb() {
   return _db;
 }
 
-// ── Users ──────────────────────────────────────────────────────────────────────
+//  Users 
 
 export async function createUser(
-  data: Pick<InsertUser, "email" | "passwordHash" | "name" | "role">
+  data: Pick<InsertUser, "email" | "passwordHash" | "name" | "role" | "phone" | "showEmail" | "showPhone">
 ): Promise<number> {
   const db = getDb();
   const result = await db
@@ -46,6 +46,9 @@ export async function createUser(
       email: data.email,
       passwordHash: data.passwordHash,
       name: data.name ?? null,
+      phone: data.phone ?? null,
+      showEmail: data.showEmail ?? true,
+      showPhone: data.showPhone ?? false,
       role: data.role ?? "user",
     })
     .returning({ id: users.id });
@@ -84,7 +87,7 @@ export async function updateLastSignedIn(id: number): Promise<void> {
     .where(eq(users.id, id));
 }
 
-// ── Sports Programs ────────────────────────────────────────────────────────────
+//  Sports Programs 
 
 export async function listPrograms(filters?: {
   sport?: string;
@@ -206,7 +209,7 @@ export async function getProgramsForCronCheck(): Promise<SportsProgram[]> {
     .where(eq(sportsPrograms.isActive, true));
 }
 
-// ── Program Changes ────────────────────────────────────────────────────────────
+//  Program Changes 
 
 export async function createProgramChange(
   data: InsertProgramChange
@@ -308,7 +311,7 @@ export async function countPendingChanges(): Promise<number> {
   return Number(result[0]?.count ?? 0);
 }
 
-// ── Ad Slots ───────────────────────────────────────────────────────────────────
+//  Ad Slots 
 
 export async function listActiveAdSlots(
   position?: string
@@ -351,7 +354,7 @@ export async function deleteAdSlot(id: number): Promise<void> {
   await db.delete(adSlots).where(eq(adSlots.id, id));
 }
 
-// ── Cron Config ────────────────────────────────────────────────────────────────
+//  Cron Config 
 
 export async function getCronConfig(
   jobName: string
@@ -393,41 +396,69 @@ export async function updateCronLastRun(
     .where(eq(cronConfig.jobName, jobName));
 }
 
-// ── Swap Listings ──────────────────────────────────────────────────────────────
+//  Swap Listings 
 
 export async function listActiveSwapListings(filters?: {
   sport?: string;
   townArea?: string;
   condition?: string;
   search?: string;
-}): Promise<SwapListing[]> {
+}) {
   const db = getDb();
   const now = new Date();
-  let rows = await db
-    .select()
+  
+  // We need to join with users table to get the contact info
+  let query = db
+    .select({
+      listing: swapListings,
+      user: {
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        showEmail: users.showEmail,
+        showPhone: users.showPhone,
+      }
+    })
     .from(swapListings)
-    .where(and(eq(swapListings.isActive, true), gte(swapListings.expiresAt, now)))
+    .innerJoin(users, eq(swapListings.userId, users.id))
+    .where(
+      and(
+        eq(swapListings.status, 'active'),
+        gte(swapListings.expiresAt, now)
+      )
+    )
     .orderBy(desc(swapListings.createdAt));
 
+  let rows = await query;
+
   if (filters?.sport) {
-    rows = rows.filter((r) => r.sportCategory === filters.sport);
+    rows = rows.filter((r) => r.listing.sportCategory === filters.sport);
   }
   if (filters?.townArea) {
-    rows = rows.filter((r) => r.townArea?.toLowerCase().includes(filters.townArea!.toLowerCase()));
+    rows = rows.filter((r) => r.listing.townArea?.toLowerCase().includes(filters.townArea!.toLowerCase()));
   }
   if (filters?.condition) {
-    rows = rows.filter((r) => r.condition === filters.condition);
+    rows = rows.filter((r) => r.listing.condition === filters.condition);
   }
   if (filters?.search) {
     const q = filters.search.toLowerCase();
     rows = rows.filter(
       (r) =>
-        r.itemName.toLowerCase().includes(q) ||
-        r.description?.toLowerCase().includes(q) ||
-        r.sportCategory.toLowerCase().includes(q)
+        r.listing.itemName.toLowerCase().includes(q) ||
+        (r.listing.description && r.listing.description.toLowerCase().includes(q)) ||
+        r.listing.sportCategory.toLowerCase().includes(q)
     );
   }
   return rows;
+}
+
+export async function listUserSwapListings(userId: number) {
+  const db = getDb();
+  return db
+    .select()
+    .from(swapListings)
+    .where(eq(swapListings.userId, userId))
+    .orderBy(desc(swapListings.createdAt));
 }
 
 export async function createSwapListing(
@@ -441,12 +472,32 @@ export async function createSwapListing(
   return result[0].id;
 }
 
-export async function deleteSwapListing(id: number): Promise<void> {
+export async function updateSwapListingStatus(id: number, userId: number, status: string): Promise<void> {
   const db = getDb();
-  await db.update(swapListings).set({ isActive: false }).where(eq(swapListings.id, id));
+  await db
+    .update(swapListings)
+    .set({ status })
+    .where(and(eq(swapListings.id, id), eq(swapListings.userId, userId)));
 }
 
-export async function listAllSwapListings(): Promise<SwapListing[]> {
+export async function deleteSwapListing(id: number): Promise<void> {
   const db = getDb();
-  return db.select().from(swapListings).orderBy(desc(swapListings.createdAt));
+  // Admin only delete
+  await db.delete(swapListings).where(eq(swapListings.id, id));
+}
+
+export async function listAllSwapListings() {
+  const db = getDb();
+  return db
+    .select({
+      listing: swapListings,
+      user: {
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+      }
+    })
+    .from(swapListings)
+    .leftJoin(users, eq(swapListings.userId, users.id))
+    .orderBy(desc(swapListings.createdAt));
 }

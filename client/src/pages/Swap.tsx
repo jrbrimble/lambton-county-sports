@@ -62,14 +62,12 @@ function NewListingForm({ onSuccess }: { onSuccess: () => void }) {
     condition: "" as string,
     priceDollars: "",
     townArea: "",
-    posterName: "",
-    posterEmail: "",
-    posterPhone: "",
+    
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.sportCategory || !form.itemName || !form.condition || !form.posterName || !form.posterEmail) {
+    if (!form.sportCategory || !form.itemName || !form.condition) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -82,9 +80,7 @@ function NewListingForm({ onSuccess }: { onSuccess: () => void }) {
       condition: form.condition as "like_new" | "good" | "fair" | "worn",
       price,
       townArea: form.townArea || undefined,
-      posterName: form.posterName,
-      posterEmail: form.posterEmail,
-      posterPhone: form.posterPhone || undefined,
+      
     });
   };
 
@@ -183,40 +179,7 @@ function NewListingForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
       </div>
 
-      <div className="border-t border-slate-200 pt-5">
-        <h4 className="text-sm font-bold text-slate-700 mb-3">Your Contact Info</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name *</label>
-            <Input
-              placeholder="Your name"
-              value={form.posterName}
-              onChange={(e) => updateField("posterName", e.target.value)}
-              className="bg-slate-50 border-slate-200"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email *</label>
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={form.posterEmail}
-              onChange={(e) => updateField("posterEmail", e.target.value)}
-              className="bg-slate-50 border-slate-200"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Phone (optional)</label>
-            <Input
-              type="tel"
-              placeholder="519-555-1234"
-              value={form.posterPhone}
-              onChange={(e) => updateField("posterPhone", e.target.value)}
-              className="bg-slate-50 border-slate-200"
-            />
-          </div>
-        </div>
-      </div>
+      
 
       <div className="flex justify-end pt-2">
         <button
@@ -233,6 +196,7 @@ function NewListingForm({ onSuccess }: { onSuccess: () => void }) {
 
 export default function EquipmentSwap() {
   const [, navigate] = useLocation();
+  const { data: user } = trpc.auth.me.useQuery();
   const [search, setSearch] = useState("");
   const [selectedSport, setSelectedSport] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("");
@@ -270,11 +234,20 @@ export default function EquipmentSwap() {
             </div>
             
             <button
-              onClick={() => setShowNewListing(true)}
+              onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                } else {
+                  setShowNewListing(true);
+                }
+              }}
               className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-lg flex items-center gap-2 shrink-0"
             >
-              <Plus className="w-5 h-5" />
-              Post Equipment
+              {user ? (
+                <><Plus className="w-5 h-5" /> Post Equipment</>
+              ) : (
+                "Sign in to Post"
+              )}
             </button>
           </div>
         </div>
@@ -349,11 +322,20 @@ export default function EquipmentSwap() {
               Be the first to post! List your used sports equipment and help other families in the community.
             </p>
             <button
-              onClick={() => setShowNewListing(true)}
+              onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                } else {
+                  setShowNewListing(true);
+                }
+              }}
               className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-sm inline-flex items-center gap-2"
             >
-              <Plus className="w-5 h-5" />
-              Post Your First Item
+              {user ? (
+                <><Plus className="w-5 h-5" /> Post Your First Item</>
+              ) : (
+                "Sign in to Post"
+              )}
             </button>
           </div>
         ) : (
@@ -362,7 +344,7 @@ export default function EquipmentSwap() {
               {listings.length} {listings.length === 1 ? "listing" : "listings"} available
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.map((listing) => {
+              {listings.map(({ listing, user }) => {
                 const condStyle = getConditionStyle(listing.condition);
                 const daysLeft = Math.ceil((new Date(listing.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 
@@ -416,7 +398,7 @@ export default function EquipmentSwap() {
                         )}
                         <div className="flex items-center gap-2 text-slate-500">
                           <User className="w-3.5 h-3.5 shrink-0" />
-                          <span>{listing.posterName}</span>
+                          <span>{user.name}</span>
                         </div>
                       </div>
                     </div>
@@ -427,18 +409,18 @@ export default function EquipmentSwap() {
                         {daysLeft > 0 ? `${daysLeft}d left` : "Expiring soon"}
                       </span>
                       <div className="flex gap-2">
-                        {listing.posterEmail && (
+                        {user.showEmail && user.email && (
                           <a
-                            href={`mailto:${listing.posterEmail}?subject=Re: ${listing.itemName} on Lambton County Sports`}
+                            href={`mailto:${user.showEmail && user.email}?subject=Re: ${listing.itemName} on Lambton County Sports`}
                             className="inline-flex items-center gap-1.5 bg-[#1B3A6B] hover:bg-[#12284D] text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors"
                           >
                             <Mail className="w-3.5 h-3.5" />
                             Email
                           </a>
                         )}
-                        {listing.posterPhone && (
+                        {user.showPhone && user.phone && (
                           <a
-                            href={`tel:${listing.posterPhone}`}
+                            href={`tel:${user.showPhone && user.phone}`}
                             className="inline-flex items-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg transition-colors"
                           >
                             <Phone className="w-3.5 h-3.5" />
@@ -464,7 +446,7 @@ export default function EquipmentSwap() {
               <Dialog.Title className="font-display text-2xl font-bold mb-1 pr-8">
                 Post Equipment
               </Dialog.Title>
-              <p className="text-blue-200 font-medium text-sm">List your used sports gear for the community. Listings last 30 days.</p>
+              <p className="text-blue-200 font-medium text-sm">List your used sports gear for the community. Listings last 60 days.</p>
               <Dialog.Close asChild>
                 <button className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
                   <X className="w-5 h-5" />

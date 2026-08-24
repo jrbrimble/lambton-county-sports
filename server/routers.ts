@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { router, publicProcedure, adminProcedure } from "./_core/trpc.js";
+import { router, publicProcedure, protectedProcedure, adminProcedure } from "./_core/trpc.js";
 import { getSessionCookieOptions } from "./_core/auth.js";
 import {
   listPrograms,
@@ -19,6 +19,8 @@ import {
   getCronConfig,
   updateCronLastRun,
   listActiveSwapListings,
+  listUserSwapListings,
+  updateSwapListingStatus,
   createSwapListing,
   deleteSwapListing,
   listAllSwapListings,
@@ -174,7 +176,7 @@ export const appRouter = router({
       }),
   }),
 
-  // ── Swap Listings ────────────────────────────────────────────────────────────
+  //  Swap Listings 
   swap: router({
     list: publicProcedure
       .input(
@@ -187,7 +189,10 @@ export const appRouter = router({
       )
       .query(({ input }) => listActiveSwapListings(input ?? {})),
 
-    create: publicProcedure
+    myListings: protectedProcedure
+      .query(({ ctx }) => listUserSwapListings(ctx.user.id)),
+
+    create: protectedProcedure
       .input(
         z.object({
           sportCategory: z.string().min(1),
@@ -199,16 +204,24 @@ export const appRouter = router({
           imageUrl: z.string().optional(),
           imageKey: z.string().optional(),
           townArea: z.string().max(128).optional(),
-          posterName: z.string().min(1).max(128),
-          posterEmail: z.string().email().max(320),
-          posterPhone: z.string().max(32).optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-        const id = await createSwapListing({ ...input, expiresAt });
+        expiresAt.setDate(expiresAt.getDate() + 60); // Extended to 60 days
+        const id = await createSwapListing({ 
+          ...input, 
+          userId: ctx.user.id,
+          expiresAt 
+        });
         return { id };
+      }),
+
+    updateStatus: protectedProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["active", "completed", "archived"]) }))
+      .mutation(async ({ input, ctx }) => {
+        await updateSwapListingStatus(input.id, ctx.user.id, input.status);
+        return { success: true };
       }),
 
     delete: adminProcedure
@@ -219,6 +232,37 @@ export const appRouter = router({
       }),
 
     listAll: adminProcedure.query(() => listAllSwapListings()),
+  }),
+
+  //  Users Management (Admin) 
+  users: router({
+    list: adminProcedure.query(async () => {
+      const { getDb } = await import("./db.js");
+      const { users } = await import("../drizzle/schema.js");
+      const { desc } = await import("drizzle-orm");
+      return (await getDb()).select().from(users).orderBy(desc(users.createdAt));
+    }),
+    updateRole: adminProcedure
+      .input(z.object({ id: z.number(), role: z.enum(["user", "admin"]) }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db.js");
+        const { users } = await import("../drizzle/schema.js");
+        const { eq } = await import("drizzle-orm");
+        await (await getDb()).update(users).set({ role: input.role }).where(eq(users.id, input.id));
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db.js");
+        const { users, swapListings } = await import("../drizzle/schema.js");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        // Delete user's listings first
+        await db.delete(swapListings).where(eq(swapListings.userId, input.id));
+        await db.delete(users).where(eq(users.id, input.id));
+        return { success: true };
+      }),
   }),
 });
 

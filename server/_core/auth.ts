@@ -94,10 +94,13 @@ export function registerAuthRoutes(app: import("express").Express) {
   // POST /api/auth/register
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { email, password, name } = req.body as {
+      const { email, password, name, phone, showEmail, showPhone } = req.body as {
         email?: string;
         password?: string;
         name?: string;
+        phone?: string;
+        showEmail?: boolean;
+        showPhone?: boolean;
       };
 
       if (!email || !password) {
@@ -118,6 +121,9 @@ export function registerAuthRoutes(app: import("express").Express) {
         email: email.toLowerCase(),
         passwordHash,
         name: name || null,
+        phone: phone || null,
+        showEmail: showEmail ?? true,
+        showPhone: showPhone ?? false,
         role: isOwner ? "admin" : "user",
       });
 

@@ -9,19 +9,22 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-// ── Enums ──────────────────────────────────────────────────────────────────────
+//  Enums 
 
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
 export const changeStatusEnum = pgEnum("change_status", ["pending", "approved", "dismissed"]);
 export const adPositionEnum = pgEnum("ad_position", ["banner_top", "banner_bottom", "sidebar_card", "inline_card"]);
 
-// ── Users ──────────────────────────────────────────────────────────────────────
+//  Users 
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
+  phone: varchar("phone", { length: 32 }),
+  showEmail: boolean("show_email").default(true).notNull(),
+  showPhone: boolean("show_phone").default(false).notNull(),
   role: userRoleEnum("role").default("user").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -31,7 +34,7 @@ export const users = pgTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// ── Sports Programs ────────────────────────────────────────────────────────────
+//  Sports Programs 
 
 export const sportsPrograms = pgTable("sports_programs", {
   id: serial("id").primaryKey(),
@@ -57,7 +60,7 @@ export const sportsPrograms = pgTable("sports_programs", {
 export type SportsProgram = typeof sportsPrograms.$inferSelect;
 export type InsertSportsProgram = typeof sportsPrograms.$inferInsert;
 
-// ── Program Changes ────────────────────────────────────────────────────────────
+//  Program Changes 
 
 export const programChanges = pgTable("program_changes", {
   id: serial("id").primaryKey(),
@@ -74,7 +77,7 @@ export const programChanges = pgTable("program_changes", {
 export type ProgramChange = typeof programChanges.$inferSelect;
 export type InsertProgramChange = typeof programChanges.$inferInsert;
 
-// ── Ad Slots ───────────────────────────────────────────────────────────────────
+//  Ad Slots 
 
 export const adSlots = pgTable("ad_slots", {
   id: serial("id").primaryKey(),
@@ -92,7 +95,7 @@ export const adSlots = pgTable("ad_slots", {
 export type AdSlot = typeof adSlots.$inferSelect;
 export type InsertAdSlot = typeof adSlots.$inferInsert;
 
-// ── Cron Config ────────────────────────────────────────────────────────────────
+//  Cron Config 
 
 export const cronConfig = pgTable("cron_config", {
   id: serial("id").primaryKey(),
@@ -107,12 +110,13 @@ export const cronConfig = pgTable("cron_config", {
 export type CronConfig = typeof cronConfig.$inferSelect;
 export type InsertCronConfig = typeof cronConfig.$inferInsert;
 
-// ── Equipment Swap Listings ────────────────────────────────────────────────────
+//  Equipment Swap Listings 
 
 export const itemConditionEnum = pgEnum("item_condition", ["like_new", "good", "fair", "worn"]);
 
 export const swapListings = pgTable("swap_listings", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   sportCategory: varchar("sport_category", { length: 128 }).notNull(),
   itemName: varchar("item_name", { length: 256 }).notNull(),
   description: text("description"),
@@ -122,10 +126,7 @@ export const swapListings = pgTable("swap_listings", {
   imageUrl: text("image_url"),
   imageKey: text("image_key"),
   townArea: varchar("town_area", { length: 128 }),
-  posterName: varchar("poster_name", { length: 128 }).notNull(),
-  posterEmail: varchar("poster_email", { length: 320 }).notNull(),
-  posterPhone: varchar("poster_phone", { length: 32 }),
-  isActive: boolean("is_active").default(true).notNull(),
+  status: varchar("status", { length: 32 }).default("active").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   expiresAt: timestamp("expires_at").notNull(),
 });
