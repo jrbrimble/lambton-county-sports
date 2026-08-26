@@ -9,6 +9,7 @@ import { appRouter } from "../routers.js";
 import { createContext } from "./context.js";
 import { registerAuthRoutes } from "./auth.js";
 import { monthlyUrlCheckHandler } from "../cronHandler.js";
+import { programSubmissionWebhookHandler } from "../webhookHandler.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,6 +34,9 @@ async function startServer() {
 
   // Cron endpoint (protected by CRON_SECRET)
   app.all("/api/cron/monthly-url-check", monthlyUrlCheckHandler);
+
+  // Webhook endpoint from GoHighLevel
+  app.post("/api/webhook/program-submission", programSubmissionWebhookHandler);
 
   // In development, proxy to Vite. In production, serve built assets.
   if (process.env.NODE_ENV === "development") {
@@ -67,12 +71,13 @@ async function startServer() {
   const port = parseInt(process.env.PORT ?? "3001");
   const server = createServer(app);
   server.listen(port, "0.0.0.0", () => {
-    console.log(`\n🏒 Lambton County Sports running at http://localhost:${port}`);
+    console.log(
+      `\n🏒 Lambton County Sports running at http://localhost:${port}`
+    );
     console.log(`   Admin: http://localhost:${port}/admin\n`);
   });
 }
 
-startServer().catch((err) => {
+startServer().catch(err => {
   console.error("❌ Failed to start server:", err);
 });
-
