@@ -28,7 +28,18 @@ export async function programSubmissionWebhookHandler(req: Request, res: Respons
       notes,
     } = data;
 
-    if (!sportName || !organization || !ageGroups || !registrationUrl) {
+    const parseField = (val: any): string => {
+      if (Array.isArray(val)) return val.join(", ").trim();
+      if (typeof val === "string") return val.trim();
+      return String(val || "").trim();
+    };
+
+    const parsedSportName = parseField(sportName);
+    const parsedOrganization = parseField(organization);
+    const parsedAgeGroups = parseField(ageGroups);
+    const parsedRegistrationUrl = parseField(registrationUrl);
+
+    if (!parsedSportName || !parsedOrganization || !parsedAgeGroups || !parsedRegistrationUrl) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -36,20 +47,20 @@ export async function programSubmissionWebhookHandler(req: Request, res: Respons
     
     // 3. Insert into database (isActive = false so it's pending review)
     await db.insert(sportsPrograms).values({
-      submitterName: submitterName ? submitterName.trim() : null,
-      submitterEmail: submitterEmail ? submitterEmail.trim() : null,
-      submitterPhone: submitterPhone ? submitterPhone.trim() : null,
-      sportName: sportName.trim(),
-      organization: organization.trim(),
-      townArea: townArea ? townArea.trim() : null,
-      ageGroups: ageGroups.trim(),
-      registrationUrl: registrationUrl.trim(),
-      websiteUrl: websiteUrl ? websiteUrl.trim() : null,
-      notes: notes ? notes.trim() : null,
+      submitterName: parseField(submitterName) || null,
+      submitterEmail: parseField(submitterEmail) || null,
+      submitterPhone: parseField(submitterPhone) || null,
+      sportName: parsedSportName,
+      organization: parsedOrganization,
+      townArea: parseField(townArea) || null,
+      ageGroups: parsedAgeGroups,
+      registrationUrl: parsedRegistrationUrl,
+      websiteUrl: parseField(websiteUrl) || null,
+      notes: parseField(notes) || null,
       isActive: false, // Must be manually activated in Admin
     });
 
-    console.log("[Webhook] Successfully inserted pending program:", sportName);
+    console.log("[Webhook] Successfully inserted pending program:", parsedSportName);
     return res.status(200).json({ success: true, message: "Program submitted successfully." });
 
   } catch (err: any) {
