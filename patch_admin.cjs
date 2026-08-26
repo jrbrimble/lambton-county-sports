@@ -1,8 +1,8 @@
-const fs = require('fs');
-let content = fs.readFileSync('client/src/pages/Admin.tsx', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("client/src/pages/Admin.tsx", "utf8");
 
 // 1. Add icons to imports if they don't exist
-if (!content.includes('UsersIcon')) {
+if (!content.includes("UsersIcon")) {
   content = content.replace(
     '} from "lucide-react";',
     '  UsersIcon, Package, Download\n} from "lucide-react";'
@@ -193,8 +193,8 @@ function MarketplaceTab() {
 // ── Main Admin Page ─────────────────────────────────────────────────────────────
 `;
 
-if (!content.includes('function UsersTab()')) {
-  content = content.replace('// ── Main Admin Page', newTabsComponents);
+if (!content.includes("function UsersTab()")) {
+  content = content.replace("// ── Main Admin Page", newTabsComponents);
 }
 
 // 3. Add tabs to the UI
@@ -214,7 +214,7 @@ if (!content.includes('value="users"')) {
               Marketplace
             </TabsTrigger>`
   );
-  
+
   content = content.replace(
     '<TabsContent value="cron"><CronTab /></TabsContent>',
     `<TabsContent value="cron"><CronTab /></TabsContent>
@@ -223,5 +223,5 @@ if (!content.includes('value="users"')) {
   );
 }
 
-fs.writeFileSync('client/src/pages/Admin.tsx', content);
-console.log('Admin.tsx updated!');
+fs.writeFileSync("client/src/pages/Admin.tsx", content);
+console.log("Admin.tsx updated!");

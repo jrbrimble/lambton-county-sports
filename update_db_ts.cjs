@@ -1,5 +1,5 @@
-const fs = require('fs');
-let content = fs.readFileSync('server/db.ts', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("server/db.ts", "utf8");
 
 const oldSwapBlockRegex = /\/\/ ── Swap Listings ──[\s\S]*$/;
 const newSwapBlock = `// ── Swap Listings ──────────────────────────────────────────────────────────────
@@ -110,5 +110,5 @@ export async function listAllSwapListings() {
 `;
 
 content = content.replace(oldSwapBlockRegex, newSwapBlock);
-fs.writeFileSync('server/db.ts', content);
-console.log('db.ts updated successfully');
+fs.writeFileSync("server/db.ts", content);
+console.log("db.ts updated successfully");

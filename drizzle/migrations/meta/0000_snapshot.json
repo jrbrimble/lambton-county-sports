@@ -139,9 +139,7 @@
         "cron_config_job_name_unique": {
           "name": "cron_config_job_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "job_name"
-          ]
+          "columns": ["job_name"]
         }
       },
       "policies": {},
@@ -520,9 +518,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -534,39 +530,22 @@
     "public.ad_position": {
       "name": "ad_position",
       "schema": "public",
-      "values": [
-        "banner_top",
-        "banner_bottom",
-        "sidebar_card",
-        "inline_card"
-      ]
+      "values": ["banner_top", "banner_bottom", "sidebar_card", "inline_card"]
     },
     "public.change_status": {
       "name": "change_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "approved",
-        "dismissed"
-      ]
+      "values": ["pending", "approved", "dismissed"]
     },
     "public.item_condition": {
       "name": "item_condition",
       "schema": "public",
-      "values": [
-        "like_new",
-        "good",
-        "fair",
-        "worn"
-      ]
+      "values": ["like_new", "good", "fair", "worn"]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "user",
-        "admin"
-      ]
+      "values": ["user", "admin"]
     }
   },
   "schemas": {},

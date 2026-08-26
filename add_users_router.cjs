@@ -1,6 +1,6 @@
-const fs = require('fs');
+const fs = require("fs");
 
-let content = fs.readFileSync('server/routers.ts', 'utf8');
+let content = fs.readFileSync("server/routers.ts", "utf8");
 
 // Ensure db functions for users exist. We can just add them inline or use db queries.
 // Wait, we don't have listUsers in db.ts. It's fine, we can use `db.select().from(users)` inside the router since we import it.
@@ -39,8 +39,11 @@ const usersRouterStr = `
   }),
 `;
 
-if (!content.includes('users: router({')) {
-  content = content.replace('export type AppRouter = typeof appRouter;', usersRouterStr + '\nexport type AppRouter = typeof appRouter;');
-  fs.writeFileSync('server/routers.ts', content);
-  console.log('routers.ts updated with users router!');
+if (!content.includes("users: router({")) {
+  content = content.replace(
+    "export type AppRouter = typeof appRouter;",
+    usersRouterStr + "\nexport type AppRouter = typeof appRouter;"
+  );
+  fs.writeFileSync("server/routers.ts", content);
+  console.log("routers.ts updated with users router!");
 }

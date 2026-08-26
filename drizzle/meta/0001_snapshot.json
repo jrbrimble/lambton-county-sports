@@ -88,9 +88,7 @@
       "compositePrimaryKeys": {
         "ad_slots_id": {
           "name": "ad_slots_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -165,17 +163,13 @@
       "compositePrimaryKeys": {
         "cron_config_id": {
           "name": "cron_config_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "cron_config_jobName_unique": {
           "name": "cron_config_jobName_unique",
-          "columns": [
-            "jobName"
-          ]
+          "columns": ["jobName"]
         }
       },
       "checkConstraint": {}
@@ -254,9 +248,7 @@
       "compositePrimaryKeys": {
         "program_changes_id": {
           "name": "program_changes_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -366,9 +358,7 @@
       "compositePrimaryKeys": {
         "sports_programs_id": {
           "name": "sports_programs_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -451,17 +441,13 @@
       "compositePrimaryKeys": {
         "users_id": {
           "name": "users_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {
         "users_openId_unique": {
           "name": "users_openId_unique",
-          "columns": [
-            "openId"
-          ]
+          "columns": ["openId"]
         }
       },
       "checkConstraint": {}

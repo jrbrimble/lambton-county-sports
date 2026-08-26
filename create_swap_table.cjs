@@ -1,5 +1,5 @@
-require('dotenv').config({ path: '.env.local' });
-const postgres = require('postgres');
+require("dotenv").config({ path: ".env.local" });
+const postgres = require("postgres");
 
 async function run() {
   const sql = postgres(process.env.DATABASE_URL);
@@ -12,7 +12,7 @@ async function run() {
         WHEN duplicate_object THEN null;
       END $$;
     `;
-    
+
     console.log("Creating swap_listings table...");
     await sql`
       CREATE TABLE IF NOT EXISTS "swap_listings" (

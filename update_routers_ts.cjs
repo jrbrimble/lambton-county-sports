@@ -1,11 +1,14 @@
-const fs = require('fs');
-let content = fs.readFileSync('server/routers.ts', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("server/routers.ts", "utf8");
 
 // Ensure protectedProcedure is imported
-if (!content.includes('protectedProcedure')) {
-  content = content.replace('import { router, publicProcedure, adminProcedure }', 'import { router, publicProcedure, protectedProcedure, adminProcedure }');
+if (!content.includes("protectedProcedure")) {
+  content = content.replace(
+    "import { router, publicProcedure, adminProcedure }",
+    "import { router, publicProcedure, protectedProcedure, adminProcedure }"
+  );
 }
-if (!content.includes('listUserSwapListings')) {
+if (!content.includes("listUserSwapListings")) {
   content = content.replace(
     /updateCronLastRun,\s*listActiveSwapListings,/,
     `updateCronLastRun,
@@ -74,5 +77,5 @@ const newSwapBlock = `swap: router({
   }),`;
 
 content = content.replace(oldSwapBlockRegex, newSwapBlock);
-fs.writeFileSync('server/routers.ts', content);
-console.log('routers.ts updated successfully');
+fs.writeFileSync("server/routers.ts", content);
+console.log("routers.ts updated successfully");

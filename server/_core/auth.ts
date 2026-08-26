@@ -5,7 +5,11 @@
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 import { SignJWT, jwtVerify } from "jose";
-import { COOKIE_NAME, ONE_YEAR_MS, UNAUTHED_ERR_MSG } from "../../shared/const.js";
+import {
+  COOKIE_NAME,
+  ONE_YEAR_MS,
+  UNAUTHED_ERR_MSG,
+} from "../../shared/const.js";
 import { parse as parseCookieHeader } from "cookie";
 import * as db from "../db.js";
 import { ENV } from "./env.js";
@@ -80,7 +84,8 @@ export async function getUserFromRequest(req: Request): Promise<User | null> {
 export function getSessionCookieOptions(req: Request) {
   const isSecure =
     req.protocol === "https" ||
-    (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() === "https";
+    (req.headers["x-forwarded-proto"] as string)?.split(",")[0]?.trim() ===
+      "https";
   return {
     httpOnly: true,
     path: "/",
@@ -94,29 +99,37 @@ export function registerAuthRoutes(app: import("express").Express) {
   // POST /api/auth/register
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { email, password, name, phone, showEmail, showPhone } = req.body as {
-        email?: string;
-        password?: string;
-        name?: string;
-        phone?: string;
-        showEmail?: boolean;
-        showPhone?: boolean;
-      };
+      const { email, password, name, phone, showEmail, showPhone } =
+        req.body as {
+          email?: string;
+          password?: string;
+          name?: string;
+          phone?: string;
+          showEmail?: boolean;
+          showPhone?: boolean;
+        };
 
       if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
+        return res
+          .status(400)
+          .json({ error: "Email and password are required" });
       }
       if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters" });
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 8 characters" });
       }
 
       const existing = await db.getUserByEmail(email);
       if (existing) {
-        return res.status(409).json({ error: "An account with this email already exists" });
+        return res
+          .status(409)
+          .json({ error: "An account with this email already exists" });
       }
 
       const passwordHash = await hashPassword(password);
-      const isOwner = ENV.ownerEmail && email.toLowerCase() === ENV.ownerEmail.toLowerCase();
+      const isOwner =
+        ENV.ownerEmail && email.toLowerCase() === ENV.ownerEmail.toLowerCase();
       const userId = await db.createUser({
         email: email.toLowerCase(),
         passwordHash,
@@ -146,7 +159,9 @@ export function registerAuthRoutes(app: import("express").Express) {
       };
 
       if (!email || !password) {
-        return res.status(400).json({ error: "Email and password are required" });
+        return res
+          .status(400)
+          .json({ error: "Email and password are required" });
       }
 
       const user = await db.getUserByEmail(email);
@@ -160,7 +175,11 @@ export function registerAuthRoutes(app: import("express").Express) {
       }
 
       // Upgrade to admin if email matches owner
-      if (user.role !== "admin" && ENV.ownerEmail && email.toLowerCase() === ENV.ownerEmail.toLowerCase()) {
+      if (
+        user.role !== "admin" &&
+        ENV.ownerEmail &&
+        email.toLowerCase() === ENV.ownerEmail.toLowerCase()
+      ) {
         await db.updateUserRole(user.id, "admin");
       }
 
@@ -172,7 +191,12 @@ export function registerAuthRoutes(app: import("express").Express) {
       res.json({ success: true });
     } catch (err) {
       console.error("[Auth] Login error:", err);
-      console.error(err); res.status(500).json({ error: "Login failed: " + ((err as Error).message || String(err)) });
+      console.error(err);
+      res
+        .status(500)
+        .json({
+          error: "Login failed: " + ((err as Error).message || String(err)),
+        });
     }
   });
 }

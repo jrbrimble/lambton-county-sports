@@ -16,6 +16,9 @@ export async function programSubmissionWebhookHandler(req: Request, res: Respons
     // 2. Parse payload from HighLevel
     // We expect these keys from the HL webhook:
     const {
+      submitterName,
+      submitterEmail,
+      submitterPhone,
       sportName,
       organization,
       townArea,
@@ -33,6 +36,9 @@ export async function programSubmissionWebhookHandler(req: Request, res: Respons
     
     // 3. Insert into database (isActive = false so it's pending review)
     await db.insert(sportsPrograms).values({
+      submitterName: submitterName ? submitterName.trim() : null,
+      submitterEmail: submitterEmail ? submitterEmail.trim() : null,
+      submitterPhone: submitterPhone ? submitterPhone.trim() : null,
       sportName: sportName.trim(),
       organization: organization.trim(),
       townArea: townArea ? townArea.trim() : null,

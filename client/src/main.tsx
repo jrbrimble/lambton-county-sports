@@ -25,13 +25,13 @@ const redirectIfUnauthorized = (error: unknown) => {
   }
 };
 
-queryClient.getQueryCache().subscribe((event) => {
+queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     redirectIfUnauthorized(event.query.state.error);
   }
 });
 
-queryClient.getMutationCache().subscribe((event) => {
+queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     redirectIfUnauthorized(event.mutation.state.error);
   }

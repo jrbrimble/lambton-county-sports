@@ -9,7 +9,9 @@ const BUCKET = "ad-images";
 
 function getStorageClient() {
   if (!ENV.supabaseUrl || !ENV.supabaseServiceRoleKey) {
-    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars are required for storage");
+    throw new Error(
+      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars are required for storage"
+    );
   }
   return createClient(ENV.supabaseUrl, ENV.supabaseServiceRoleKey).storage;
 }

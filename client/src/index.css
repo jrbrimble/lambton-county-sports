@@ -5,7 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -48,61 +50,61 @@
 :root {
   /* Lambton County Sports brand palette */
   --radius: 0px;
-  --navy: #1B3A6B;
-  --royal-blue: #1E73BE;
-  --green: #4A8C2A;
-  --light-grey: #F4F5F6;
-  --white: #FFFFFF;
-  --text-dark: #1B3A6B;
+  --navy: #1b3a6b;
+  --royal-blue: #1e73be;
+  --green: #4a8c2a;
+  --light-grey: #f4f5f6;
+  --white: #ffffff;
+  --text-dark: #1b3a6b;
   --text-light: #666666;
-  --border-light: #E0E0E0;
+  --border-light: #e0e0e0;
 
   /* Semantic colors */
-  --background: #FFFFFF;
-  --foreground: #1B3A6B;
-  --card: #FFFFFF;
-  --card-foreground: #1B3A6B;
-  --popover: #FFFFFF;
-  --popover-foreground: #1B3A6B;
-  --primary: #1E73BE;
-  --primary-foreground: #FFFFFF;
-  --secondary: #4A8C2A;
-  --secondary-foreground: #FFFFFF;
-  --muted: #F4F5F6;
+  --background: #ffffff;
+  --foreground: #1b3a6b;
+  --card: #ffffff;
+  --card-foreground: #1b3a6b;
+  --popover: #ffffff;
+  --popover-foreground: #1b3a6b;
+  --primary: #1e73be;
+  --primary-foreground: #ffffff;
+  --secondary: #4a8c2a;
+  --secondary-foreground: #ffffff;
+  --muted: #f4f5f6;
   --muted-foreground: #666666;
-  --accent: #4A8C2A;
-  --accent-foreground: #FFFFFF;
-  --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
-  --border: #E0E0E0;
-  --input: #FFFFFF;
-  --ring: #1E73BE;
-  --chart-1: #1E73BE;
-  --chart-2: #4A8C2A;
-  --chart-3: #1B3A6B;
+  --accent: #4a8c2a;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e0e0e0;
+  --input: #ffffff;
+  --ring: #1e73be;
+  --chart-1: #1e73be;
+  --chart-2: #4a8c2a;
+  --chart-3: #1b3a6b;
   --chart-4: #666666;
-  --chart-5: #DC2626;
-  --sidebar: #1B3A6B;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #4A8C2A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E73BE;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #2D5A9E;
-  --sidebar-ring: #4A8C2A;
+  --chart-5: #dc2626;
+  --sidebar: #1b3a6b;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #4a8c2a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e73be;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2d5a9e;
+  --sidebar-ring: #4a8c2a;
 }
 
 .dark {
-  --background: #1B3A6B;
-  --foreground: #FFFFFF;
-  --card: #2D5A9E;
-  --card-foreground: #FFFFFF;
-  --popover: #2D5A9E;
-  --popover-foreground: #FFFFFF;
-  --muted: #4A7BA7;
-  --muted-foreground: #E0E0E0;
-  --border: #4A7BA7;
-  --input: #2D5A9E;
+  --background: #1b3a6b;
+  --foreground: #ffffff;
+  --card: #2d5a9e;
+  --card-foreground: #ffffff;
+  --popover: #2d5a9e;
+  --popover-foreground: #ffffff;
+  --muted: #4a7ba7;
+  --muted-foreground: #e0e0e0;
+  --border: #4a7ba7;
+  --input: #2d5a9e;
 }
 
 @layer base {

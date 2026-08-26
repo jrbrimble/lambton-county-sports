@@ -1,5 +1,5 @@
-const fs = require('fs');
-let content = fs.readFileSync('server/routers.ts', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("server/routers.ts", "utf8");
 
 const adminUpdateStr = `
     adminUpdate: adminProcedure
@@ -25,9 +25,12 @@ const adminUpdateStr = `
 `;
 
 // Remove from programs router
-content = content.replace(adminUpdateStr, ''); // Hopefully it matches exactly
+content = content.replace(adminUpdateStr, ""); // Hopefully it matches exactly
 // If it doesn't match exactly because of formatting, we can use a regex:
-content = content.replace(/\s*adminUpdate: adminProcedure[\s\S]*?updateSwapListingAsAdmin\(id, data\);\s*return \{ success: true \};\s*}\),\s*/, '\n');
+content = content.replace(
+  /\s*adminUpdate: adminProcedure[\s\S]*?updateSwapListingAsAdmin\(id, data\);\s*return \{ success: true \};\s*}\),\s*/,
+  "\n"
+);
 
 // Add to swap router before `delete: adminProcedure`
 // Let's find the swap block
@@ -35,11 +38,16 @@ const swapBlockRegex = /swap: router\({[\s\S]*?delete: adminProcedure/g;
 let match;
 while ((match = swapBlockRegex.exec(content)) !== null) {
   // We found the delete: adminProcedure inside swap: router({
-  const beforeDelete = content.slice(0, match.index + match[0].length - 'delete: adminProcedure'.length);
-  const afterDelete = content.slice(match.index + match[0].length - 'delete: adminProcedure'.length);
-  content = beforeDelete + adminUpdateStr.trim() + ',\n    ' + afterDelete;
+  const beforeDelete = content.slice(
+    0,
+    match.index + match[0].length - "delete: adminProcedure".length
+  );
+  const afterDelete = content.slice(
+    match.index + match[0].length - "delete: adminProcedure".length
+  );
+  content = beforeDelete + adminUpdateStr.trim() + ",\n    " + afterDelete;
   break; // Only apply to the first match
 }
 
-fs.writeFileSync('server/routers.ts', content);
-console.log('Fixed adminUpdate in routers.ts');
+fs.writeFileSync("server/routers.ts", content);
+console.log("Fixed adminUpdate in routers.ts");

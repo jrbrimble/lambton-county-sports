@@ -25,13 +25,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const endpoint =
+        mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body: Record<string, string | boolean> = { email, password };
       if (mode === "register") {
         if (name) body.name = name;
         if (phone) body.phone = phone;
-        body.showEmail = (contactPref === "email" || contactPref === "both");
-        body.showPhone = (contactPref === "phone" || contactPref === "both");
+        body.showEmail = contactPref === "email" || contactPref === "both";
+        body.showPhone = contactPref === "phone" || contactPref === "both";
       }
 
       const res = await fetch(endpoint, {
@@ -86,7 +87,7 @@ export default function Login() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-                    {mode === "register" && (
+          {mode === "register" && (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Name</Label>
@@ -94,19 +95,19 @@ export default function Login() {
                   id="name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
                   placeholder="Your name"
                   className="mt-1"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="phone">Phone Number (Optional)</Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={e => setPhone(e.target.value)}
                   placeholder="519-555-1234"
                   className="mt-1"
                 />
@@ -114,16 +115,39 @@ export default function Login() {
 
               <div>
                 <Label>Public Contact Preference</Label>
-                <p className="text-xs text-[#666] mb-2">How should buyers contact you for Equipment Swap listings?</p>
+                <p className="text-xs text-[#666] mb-2">
+                  How should buyers contact you for Equipment Swap listings?
+                </p>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="radio" name="contactPref" value="email" checked={contactPref === "email"} onChange={() => setContactPref("email")} /> Email Only
+                    <input
+                      type="radio"
+                      name="contactPref"
+                      value="email"
+                      checked={contactPref === "email"}
+                      onChange={() => setContactPref("email")}
+                    />{" "}
+                    Email Only
                   </label>
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="radio" name="contactPref" value="phone" checked={contactPref === "phone"} onChange={() => setContactPref("phone")} /> Phone Only
+                    <input
+                      type="radio"
+                      name="contactPref"
+                      value="phone"
+                      checked={contactPref === "phone"}
+                      onChange={() => setContactPref("phone")}
+                    />{" "}
+                    Phone Only
                   </label>
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="radio" name="contactPref" value="both" checked={contactPref === "both"} onChange={() => setContactPref("both")} /> Both
+                    <input
+                      type="radio"
+                      name="contactPref"
+                      value="both"
+                      checked={contactPref === "both"}
+                      onChange={() => setContactPref("both")}
+                    />{" "}
+                    Both
                   </label>
                 </div>
               </div>
@@ -137,7 +161,7 @@ export default function Login() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
               className="mt-1"
               autoComplete="email"
@@ -151,10 +175,12 @@ export default function Login() {
               type="password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               placeholder={mode === "register" ? "Min. 8 characters" : ""}
               className="mt-1"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
             />
           </div>
 

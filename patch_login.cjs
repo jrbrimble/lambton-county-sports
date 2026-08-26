@@ -1,8 +1,8 @@
-const fs = require('fs');
+const fs = require("fs");
 
-let content = fs.readFileSync('client/src/pages/Login.tsx', 'utf8');
+let content = fs.readFileSync("client/src/pages/Login.tsx", "utf8");
 
-if (!content.includes('const [phone, setPhone]')) {
+if (!content.includes("const [phone, setPhone]")) {
   content = content.replace(
     'const [name, setName] = useState("");',
     `const [name, setName] = useState("");
@@ -71,7 +71,10 @@ content = content.replace(
         body.showPhone = (contactPref === "phone" || contactPref === "both").toString();
       }`
 );
-content = content.replace(/Record<string, string>/, 'Record<string, string | boolean>');
+content = content.replace(
+  /Record<string, string>/,
+  "Record<string, string | boolean>"
+);
 
 // Update UI
 content = content.replace(
@@ -92,5 +95,5 @@ content = content.replace(
       }`
 );
 
-fs.writeFileSync('client/src/pages/Login.tsx', content);
-console.log('Login.tsx updated!');
+fs.writeFileSync("client/src/pages/Login.tsx", content);
+console.log("Login.tsx updated!");

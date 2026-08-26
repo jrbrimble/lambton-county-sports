@@ -21,10 +21,7 @@
       "programStartDate": "2026-05-14 00:00:00"
     }
   ],
-  "messages": [
-    "total_programs",
-    "32"
-  ],
+  "messages": ["total_programs", "32"],
   "stdout": "id\tsportName\torganization\tageGroups\tregistrationOpenDate\tregistrationCloseDate\tprogramStartDate\n30001\tIce Hockey\tPoint Edward Minor Athletic Association (PEMAA)\tU5, U7, U9, U11, U13, U15, U18\t2026-05-08 00:00:00\tNULL\t2026-09-01 00:00:00\n30002\tSoccer\tPoint Edward Minor Athletic Association (PEMAA)\tU5 (Mite), U8 (Hot Shots), U10 (Tyke), U13 (Junior)\t2026-02-01 00:00:00\t2026-04-15 00:00:00\t2026-05-14 00:00:00\ntotal_programs\n32\n",
   "stderr": "",
   "execution_time_ms": 286

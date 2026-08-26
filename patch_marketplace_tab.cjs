@@ -1,7 +1,7 @@
-const fs = require('fs');
-let content = fs.readFileSync('client/src/pages/Admin.tsx', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("client/src/pages/Admin.tsx", "utf8");
 
-if (!content.includes('editingListing')) {
+if (!content.includes("editingListing")) {
   const newMarketplaceTab = `
 function MarketplaceTab() {
   const { data: listings, isLoading } = trpc.swap.listAll.useQuery();
@@ -207,7 +207,10 @@ function MarketplaceTab() {
   );
 }`;
 
-  content = content.replace(/function MarketplaceTab\(\) \{[\s\S]*?\n\}\n/, newMarketplaceTab + '\n');
-  fs.writeFileSync('client/src/pages/Admin.tsx', content);
-  console.log('Updated MarketplaceTab with edit functionality');
+  content = content.replace(
+    /function MarketplaceTab\(\) \{[\s\S]*?\n\}\n/,
+    newMarketplaceTab + "\n"
+  );
+  fs.writeFileSync("client/src/pages/Admin.tsx", content);
+  console.log("Updated MarketplaceTab with edit functionality");
 }

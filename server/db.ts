@@ -34,10 +34,19 @@ export function getDb() {
   return _db;
 }
 
-//  Users 
+//  Users
 
 export async function createUser(
-  data: Pick<InsertUser, "email" | "passwordHash" | "name" | "role" | "phone" | "showEmail" | "showPhone">
+  data: Pick<
+    InsertUser,
+    | "email"
+    | "passwordHash"
+    | "name"
+    | "role"
+    | "phone"
+    | "showEmail"
+    | "showPhone"
+  >
 ): Promise<number> {
   const db = getDb();
   const result = await db
@@ -87,7 +96,7 @@ export async function updateLastSignedIn(id: number): Promise<void> {
     .where(eq(users.id, id));
 }
 
-//  Sports Programs 
+//  Sports Programs
 
 export async function listPrograms(filters?: {
   sport?: string;
@@ -133,7 +142,7 @@ export async function listPrograms(filters?: {
   if (filters?.ageMin !== undefined || filters?.ageMax !== undefined) {
     const filterMin = filters?.ageMin ?? 0;
     const filterMax = filters?.ageMax ?? 99;
-    rows = rows.filter((p) => {
+    rows = rows.filter(p => {
       const pMin = p.ageMin ?? 0;
       const pMax = p.ageMax ?? 99;
       return pMin <= filterMax && pMax >= filterMin;
@@ -141,7 +150,7 @@ export async function listPrograms(filters?: {
   }
 
   if (filters?.status) {
-    rows = rows.filter((p) => {
+    rows = rows.filter(p => {
       const open = p.registrationOpenDate;
       const close = p.registrationCloseDate;
       if (filters.status === "open") {
@@ -193,7 +202,10 @@ export async function updateProgram(
   data: Partial<InsertSportsProgram>
 ): Promise<void> {
   const db = getDb();
-  await db.update(sportsPrograms).set({ ...data, updatedAt: new Date() }).where(eq(sportsPrograms.id, id));
+  await db
+    .update(sportsPrograms)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(sportsPrograms.id, id));
 }
 
 export async function deleteProgram(id: number): Promise<void> {
@@ -209,7 +221,7 @@ export async function getProgramsForCronCheck(): Promise<SportsProgram[]> {
     .where(eq(sportsPrograms.isActive, true));
 }
 
-//  Program Changes 
+//  Program Changes
 
 export async function createProgramChange(
   data: InsertProgramChange
@@ -237,10 +249,7 @@ export async function listPendingChanges(): Promise<
       organization: sportsPrograms.organization,
     })
     .from(programChanges)
-    .leftJoin(
-      sportsPrograms,
-      eq(programChanges.programId, sportsPrograms.id)
-    )
+    .leftJoin(sportsPrograms, eq(programChanges.programId, sportsPrograms.id))
     .where(eq(programChanges.status, "pending"))
     .orderBy(desc(programChanges.detectedAt));
   return rows as (ProgramChange & {
@@ -311,11 +320,9 @@ export async function countPendingChanges(): Promise<number> {
   return Number(result[0]?.count ?? 0);
 }
 
-//  Ad Slots 
+//  Ad Slots
 
-export async function listActiveAdSlots(
-  position?: string
-): Promise<AdSlot[]> {
+export async function listActiveAdSlots(position?: string): Promise<AdSlot[]> {
   const db = getDb();
   const conditions = [eq(adSlots.isActive, true)];
   if (position)
@@ -346,7 +353,10 @@ export async function updateAdSlot(
   data: Partial<InsertAdSlot>
 ): Promise<void> {
   const db = getDb();
-  await db.update(adSlots).set({ ...data, updatedAt: new Date() }).where(eq(adSlots.id, id));
+  await db
+    .update(adSlots)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(adSlots.id, id));
 }
 
 export async function deleteAdSlot(id: number): Promise<void> {
@@ -354,7 +364,7 @@ export async function deleteAdSlot(id: number): Promise<void> {
   await db.delete(adSlots).where(eq(adSlots.id, id));
 }
 
-//  Cron Config 
+//  Cron Config
 
 export async function getCronConfig(
   jobName: string
@@ -368,9 +378,7 @@ export async function getCronConfig(
   return result[0];
 }
 
-export async function upsertCronConfig(
-  data: InsertCronConfig
-): Promise<void> {
+export async function upsertCronConfig(data: InsertCronConfig): Promise<void> {
   const db = getDb();
   await db
     .insert(cronConfig)
@@ -396,7 +404,7 @@ export async function updateCronLastRun(
     .where(eq(cronConfig.jobName, jobName));
 }
 
-//  Swap Listings 
+//  Swap Listings
 
 export async function listActiveSwapListings(filters?: {
   sport?: string;
@@ -406,7 +414,7 @@ export async function listActiveSwapListings(filters?: {
 }) {
   const db = getDb();
   const now = new Date();
-  
+
   // We need to join with users table to get the contact info
   let query = db
     .select({
@@ -417,35 +425,37 @@ export async function listActiveSwapListings(filters?: {
         phone: users.phone,
         showEmail: users.showEmail,
         showPhone: users.showPhone,
-      }
+      },
     })
     .from(swapListings)
     .innerJoin(users, eq(swapListings.userId, users.id))
     .where(
-      and(
-        eq(swapListings.status, 'active'),
-        gte(swapListings.expiresAt, now)
-      )
+      and(eq(swapListings.status, "active"), gte(swapListings.expiresAt, now))
     )
     .orderBy(desc(swapListings.createdAt));
 
   let rows = await query;
 
   if (filters?.sport) {
-    rows = rows.filter((r) => r.listing.sportCategory === filters.sport);
+    rows = rows.filter(r => r.listing.sportCategory === filters.sport);
   }
   if (filters?.townArea) {
-    rows = rows.filter((r) => r.listing.townArea?.toLowerCase().includes(filters.townArea!.toLowerCase()));
+    rows = rows.filter(r =>
+      r.listing.townArea
+        ?.toLowerCase()
+        .includes(filters.townArea!.toLowerCase())
+    );
   }
   if (filters?.condition) {
-    rows = rows.filter((r) => r.listing.condition === filters.condition);
+    rows = rows.filter(r => r.listing.condition === filters.condition);
   }
   if (filters?.search) {
     const q = filters.search.toLowerCase();
     rows = rows.filter(
-      (r) =>
+      r =>
         r.listing.itemName.toLowerCase().includes(q) ||
-        (r.listing.description && r.listing.description.toLowerCase().includes(q)) ||
+        (r.listing.description &&
+          r.listing.description.toLowerCase().includes(q)) ||
         r.listing.sportCategory.toLowerCase().includes(q)
     );
   }
@@ -472,7 +482,11 @@ export async function createSwapListing(
   return result[0].id;
 }
 
-export async function updateSwapListingStatus(id: number, userId: number, status: string): Promise<void> {
+export async function updateSwapListingStatus(
+  id: number,
+  userId: number,
+  status: string
+): Promise<void> {
   const db = getDb();
   await db
     .update(swapListings)
@@ -480,13 +494,12 @@ export async function updateSwapListingStatus(id: number, userId: number, status
     .where(and(eq(swapListings.id, id), eq(swapListings.userId, userId)));
 }
 
-
-export async function updateSwapListingAsAdmin(id: number, data: Partial<InsertSwapListing> & { status?: string }): Promise<void> {
+export async function updateSwapListingAsAdmin(
+  id: number,
+  data: Partial<InsertSwapListing> & { status?: string }
+): Promise<void> {
   const db = getDb();
-  await db
-    .update(swapListings)
-    .set(data)
-    .where(eq(swapListings.id, id));
+  await db.update(swapListings).set(data).where(eq(swapListings.id, id));
 }
 export async function deleteSwapListing(id: number): Promise<void> {
   const db = getDb();
@@ -503,7 +516,7 @@ export async function listAllSwapListings() {
         name: users.name,
         email: users.email,
         phone: users.phone,
-      }
+      },
     })
     .from(swapListings)
     .leftJoin(users, eq(swapListings.userId, users.id))

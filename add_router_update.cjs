@@ -1,7 +1,7 @@
-const fs = require('fs');
-let content = fs.readFileSync('server/routers.ts', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("server/routers.ts", "utf8");
 
-if (!content.includes('adminUpdate: adminProcedure')) {
+if (!content.includes("adminUpdate: adminProcedure")) {
   const routerStr = `
     adminUpdate: adminProcedure
       .input(
@@ -24,11 +24,11 @@ if (!content.includes('adminUpdate: adminProcedure')) {
         return { success: true };
       }),
 `;
-  
+
   content = content.replace(
-    'delete: adminProcedure',
-    routerStr + '\n    delete: adminProcedure'
+    "delete: adminProcedure",
+    routerStr + "\n    delete: adminProcedure"
   );
-  fs.writeFileSync('server/routers.ts', content);
-  console.log('Added adminUpdate to swap router');
+  fs.writeFileSync("server/routers.ts", content);
+  console.log("Added adminUpdate to swap router");
 }
