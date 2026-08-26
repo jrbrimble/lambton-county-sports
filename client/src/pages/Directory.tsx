@@ -142,15 +142,26 @@ function HighLevelModal({
               <X className="w-4 h-4" />
             </Dialog.Close>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full min-h-[500px] flex items-center justify-center bg-slate-50/50">
-            {/* PLACEHOLDER FOR HIGHLEVEL IFRAME */}
-            <div className="text-center space-y-3">
-              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto opacity-20"></div>
-              <p className="text-slate-500 font-medium">
-                Waiting for HighLevel embed code...
-              </p>
-              <p className="text-xs text-slate-400">Form ID: {formId}</p>
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 w-full min-h-[500px] bg-slate-50/50">
+            <iframe
+              src={`https://link.convertmorebusiness.com/widget/form/${formId}`}
+              style={{ width: "100%", height: "100%", minHeight: "600px", border: "none", borderRadius: "8px" }}
+              id={`inline-${formId}`}
+              data-layout="{'id':'INLINE'}"
+              data-trigger-type="alwaysShow"
+              data-trigger-value=""
+              data-activation-type="alwaysActivated"
+              data-activation-value=""
+              data-deactivation-type="neverDeactivate"
+              data-deactivation-value=""
+              data-form-name={title}
+              data-height="1169"
+              data-layout-iframe-id={`inline-${formId}`}
+              data-form-id={formId}
+              data-cookie-consent="true"
+              data-cookie-consent-provider="auto"
+              title={title}
+            />
           </div>
         </Dialog.Content>
       </Dialog.Portal>
