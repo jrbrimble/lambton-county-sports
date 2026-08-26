@@ -5,10 +5,10 @@ import { sportsPrograms } from "../drizzle/schema.js";
 export async function programSubmissionWebhookHandler(req: Request, res: Response) {
   try {
     // 1. Verify Secret
-    const hlSecret = req.headers["x-hl-secret"];
-    if (hlSecret !== "quote-directory-archery") {
-      return res.status(403).json({ error: "Forbidden: Invalid webhook secret." });
-    }
+    // const hlSecret = req.headers["x-hl-secret"];
+    // if (hlSecret !== "quote-directory-archery") {
+    //   return res.status(403).json({ error: "Forbidden: Invalid webhook secret." });
+    // }
 
     const data = req.body;
     console.log("[Webhook] Received program submission:", data);
