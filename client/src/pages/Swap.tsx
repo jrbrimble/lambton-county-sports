@@ -12,6 +12,7 @@ import {
   Mail,
   Phone,
   User,
+  Lock,
   ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -464,7 +465,7 @@ export default function EquipmentSwap() {
               available
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.map(({ listing, user }) => {
+              {listings.map(({ listing, user: seller }) => {
                 const condStyle = getConditionStyle(listing.condition);
                 const daysLeft = Math.ceil(
                   (new Date(listing.expiresAt).getTime() - Date.now()) /
@@ -527,7 +528,7 @@ export default function EquipmentSwap() {
                         )}
                         <div className="flex items-center gap-2 text-slate-500">
                           <User className="w-3.5 h-3.5 shrink-0" />
-                          <span>{user.name}</span>
+                          <span>{seller.name || "Community Member"}</span>
                         </div>
                       </div>
                     </div>
@@ -537,26 +538,40 @@ export default function EquipmentSwap() {
                       <span className="text-xs text-slate-400 font-medium">
                         {daysLeft > 0 ? `${daysLeft}d left` : "Expiring soon"}
                       </span>
-                      <div className="flex gap-2">
-                        {user.showEmail && user.email && (
-                          <a
-                            href={`mailto:${user.showEmail && user.email}?subject=Re: ${listing.itemName} on Lambton County Sports`}
-                            className="inline-flex items-center gap-1.5 bg-[#1B3A6B] hover:bg-[#12284D] text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            Email
-                          </a>
-                        )}
-                        {user.showPhone && user.phone && (
-                          <a
-                            href={`tel:${user.showPhone && user.phone}`}
-                            className="inline-flex items-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg transition-colors"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                            Call
-                          </a>
-                        )}
-                      </div>
+                      {user ? (
+                        <div className="flex gap-2">
+                          {seller.showEmail && seller.email && (
+                            <a
+                              href={`mailto:${seller.email}?subject=Re: ${listing.itemName} on Lambton County Sports`}
+                              className="inline-flex items-center gap-1.5 bg-[#1B3A6B] hover:bg-[#12284D] text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors shadow-xs"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              Email
+                            </a>
+                          )}
+                          {seller.showPhone && seller.phone && (
+                            <a
+                              href={`tel:${seller.phone}`}
+                              className="inline-flex items-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg transition-colors shadow-xs"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                              Call
+                            </a>
+                          )}
+                          {!seller.email && !seller.phone && (
+                            <span className="text-xs text-slate-400 italic">No contact info provided</span>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => navigate("/login?mode=register")}
+                          className="inline-flex items-center gap-1.5 bg-white hover:bg-[#1B3A6B] hover:text-white text-slate-700 font-bold text-xs px-3.5 py-2 rounded-lg border border-slate-200 hover:border-[#1B3A6B] transition-all shadow-xs group/lock cursor-pointer"
+                          title="Sign in or register for free to contact the seller"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-amber-500 group-hover/lock:text-white transition-colors" />
+                          Sign in to Contact
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

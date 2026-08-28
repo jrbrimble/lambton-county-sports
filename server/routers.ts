@@ -229,7 +229,20 @@ export const appRouter = router({
           })
           .optional()
       )
-      .query(({ input }) => listActiveSwapListings(input ?? {})),
+      .query(async ({ input, ctx }) => {
+        const rows = await listActiveSwapListings(input ?? {});
+        if (!ctx.user) {
+          return rows.map(r => ({
+            ...r,
+            user: {
+              ...r.user,
+              email: null,
+              phone: null,
+            },
+          }));
+        }
+        return rows;
+      }),
 
     myListings: protectedProcedure.query(({ ctx }) =>
       listUserSwapListings(ctx.user.id)

@@ -1486,12 +1486,19 @@ function MarketplaceTab() {
 
   const [editingListing, setEditingListing] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const deleteListing = trpc.swap.delete.useMutation({
     onSuccess: () => {
       toast.success("Listing deleted");
       utils.swap.listAll.invalidate();
       utils.swap.list.invalidate();
+      setDeleteId(null);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete listing");
     },
   });
 
@@ -1507,34 +1514,68 @@ function MarketplaceTab() {
     },
   });
 
+  const filteredListings = (listings || []).filter(l => {
+    if (statusFilter !== "all" && l.listing.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchItem = l.listing.itemName?.toLowerCase().includes(q);
+      const matchSport = l.listing.sportCategory?.toLowerCase().includes(q);
+      const matchTown = l.listing.townArea?.toLowerCase().includes(q);
+      const matchSeller = l.user?.name?.toLowerCase().includes(q);
+      const matchEmail = l.user?.email?.toLowerCase().includes(q);
+      const matchPhone = l.user?.phone?.toLowerCase().includes(q);
+      return matchItem || matchSport || matchTown || matchSeller || matchEmail || matchPhone;
+    }
+    return true;
+  });
+
+  const activeCount = (listings || []).filter(l => l.listing.status === "active").length;
+
   const exportCSV = () => {
-    if (!listings) return;
-    const header = [
-      "ID,Item,Sport,Price,Condition,Status,Seller Name,Seller Email,Created,Expires",
+    if (!listings || listings.length === 0) {
+      toast.error("No listings to export");
+      return;
+    }
+    const headers = [
+      "ID",
+      "Item Name",
+      "Sport Category",
+      "Price ($)",
+      "Condition",
+      "Status",
+      "Size Info",
+      "Town/Area",
+      "Seller Name",
+      "Seller Email",
+      "Seller Phone",
+      "Created At",
+      "Expires At"
     ];
-    const rows = listings.map(l => {
-      return [
-        l.listing.id,
-        `"${l.listing.itemName.replace(/"/g, '""')}"`,
-        `"${l.listing.sportCategory}"`,
-        l.listing.price / 100,
-        l.listing.condition,
-        l.listing.status,
-        `"${l.user?.name || ""}"`,
-        `"${l.user?.email || ""}"`,
-        new Date(l.listing.createdAt).toISOString().split("T")[0],
-        new Date(l.listing.expiresAt).toISOString().split("T")[0],
-      ].join(",");
-    });
-    const csv = header.concat(rows).join("\n");
+    const rows = filteredListings.map(l => [
+      l.listing.id,
+      `"${(l.listing.itemName || "").replace(/"/g, '""')}"`,
+      `"${(l.listing.sportCategory || "").replace(/"/g, '""')}"`,
+      (l.listing.price / 100).toFixed(2),
+      `"${l.listing.condition}"`,
+      `"${l.listing.status}"`,
+      `"${(l.listing.sizeInfo || "").replace(/"/g, '""')}"`,
+      `"${(l.listing.townArea || "").replace(/"/g, '""')}"`,
+      `"${(l.user?.name || "").replace(/"/g, '""')}"`,
+      `"${(l.user?.email || "").replace(/"/g, '""')}"`,
+      `"${(l.user?.phone || "").replace(/"/g, '""')}"`,
+      `"${new Date(l.listing.createdAt).toISOString()}"`,
+      `"${new Date(l.listing.expiresAt).toISOString()}"`
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "swap_listings.csv");
+    link.setAttribute("download", `equipment_swap_listings_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success("CSV exported successfully");
   };
 
   const handleEditClick = (l: any) => {
@@ -1559,97 +1600,178 @@ function MarketplaceTab() {
     });
   };
 
-  if (isLoading)
-    return (
-      <div className="p-8 text-center text-slate-500">Loading listings...</div>
-    );
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-semibold">Equipment Swap Marketplace</h2>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {listings?.length ?? 0} total listings ({activeCount} active, {listings?.length ? listings.length - activeCount : 0} completed/archived)
+          </p>
+        </div>
         <Button onClick={exportCSV} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> Export CSV
+          <Download className="w-4 h-4" /> Export to CSV
         </Button>
       </div>
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
-              <tr>
-                <th className="px-6 py-4">Item</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Price</th>
-                <th className="px-6 py-4">Seller</th>
-                <th className="px-6 py-4">Expires</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {listings?.map(l => (
-                <tr key={l.listing.id} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4">
-                    <p className="font-bold">{l.listing.itemName}</p>
-                    <p className="text-xs text-slate-500">
-                      {l.listing.sportCategory}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge
-                      variant={
-                        l.listing.status === "active" ? "default" : "secondary"
-                      }
-                    >
-                      {l.listing.status.toUpperCase()}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 font-medium">
-                    ${l.listing.price / 100}
-                  </td>
-                  <td className="px-6 py-4">
-                    <p>{l.user?.name}</p>
-                    <p className="text-xs text-slate-500">{l.user?.email}</p>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">
-                    {new Date(l.listing.expiresAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right whitespace-nowrap">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 mr-1"
-                      onClick={() => handleEditClick(l)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => {
-                        if (
-                          window.confirm("Delete this listing permanently?")
-                        ) {
-                          deleteListing.mutate({ id: l.listing.id });
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border self-start">
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All ({listings?.length ?? 0})
+          </button>
+          <button
+            onClick={() => setStatusFilter("active")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "active" ? "bg-emerald-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Active ({activeCount})
+          </button>
+          <button
+            onClick={() => setStatusFilter("completed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "completed" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Completed
+          </button>
+          <button
+            onClick={() => setStatusFilter("archived")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "archived" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Archived
+          </button>
+        </div>
+
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Search gear, seller, email, phone..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="h-9 text-xs"
+          />
         </div>
       </div>
 
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border overflow-hidden bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Item / Sport</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Price & Condition</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Seller Information</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Expires</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredListings.map(l => (
+                <tr key={l.listing.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-bold text-foreground text-sm">{l.listing.itemName}</p>
+                    <p className="text-xs text-muted-foreground">{l.listing.sportCategory}</p>
+                    {l.listing.sizeInfo && (
+                      <span className="inline-block mt-1 text-[11px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                        Size: {l.listing.sizeInfo}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-bold text-foreground">
+                      {l.listing.price === 0 ? "Free / Giveaway" : `$${(l.listing.price / 100).toFixed(2)}`}
+                    </p>
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground mt-0.5 inline-block">
+                      {l.listing.condition?.replace("_", " ").toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-bold text-foreground text-xs">{l.user?.name || "Anonymous Member"}</p>
+                    <p className="text-xs font-mono text-muted-foreground">{l.user?.email || "No email"}</p>
+                    {l.user?.phone && (
+                      <p className="text-xs text-muted-foreground mt-0.5">📞 {l.user.phone}</p>
+                    )}
+                    {l.listing.townArea && (
+                      <span className="text-[11px] text-muted-foreground mt-0.5 block">📍 {l.listing.townArea}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded uppercase ${
+                      l.listing.status === "active"
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        : l.listing.status === "completed"
+                        ? "bg-blue-100 text-blue-800 border border-blue-200"
+                        : "bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}>
+                      {l.listing.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs hidden lg:table-cell">
+                    {new Date(l.listing.expiresAt).toLocaleDateString("en-CA", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        onClick={() => handleEditClick(l)}
+                        title="Edit listing"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleteId(l.listing.id)}
+                        title="Delete listing"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredListings.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                    {listings?.length === 0
+                      ? "No swap listings found. Postings from community members will appear here!"
+                      : "No listings match your search or filter."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Edit Listing Dialog */}
       <Dialog
         open={!!editingListing}
         onOpenChange={open => !open && setEditingListing(null)}
       >
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Listing</DialogTitle>
+            <DialogTitle>Edit Community Listing</DialogTitle>
           </DialogHeader>
           {editingListing && (
             <div className="grid grid-cols-2 gap-4 py-4">
@@ -1758,10 +1880,32 @@ function MarketplaceTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteId !== null} onOpenChange={o => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this listing permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This gear listing will be permanently removed from the database and Equipment Swap board.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) deleteListing.mutate({ id: deleteId });
+              }}
+            >
+              Delete Listing
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
 
 // ── Subscribers Tab ──────────────────────────────────────────────────────────
 
