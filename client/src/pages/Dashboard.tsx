@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Package, CheckCircle, Clock, Search, Trash2 } from "lucide-react";
+import { Package, CheckCircle, Clock, Search, Trash2, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
+  const { logout } = useAuth();
   const { data: user, isLoading: isUserLoading } = trpc.auth.me.useQuery();
   const { data: listings, isLoading: isListingsLoading } =
     trpc.swap.myListings.useQuery(undefined, {
@@ -33,13 +35,25 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <div className="bg-[#1B3A6B] text-white py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-            My Dashboard
-          </h1>
-          <p className="text-blue-200 text-lg font-medium">
-            Manage your equipment swap listings and profile.
-          </p>
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight mb-1">
+              My Dashboard
+            </h1>
+            <p className="text-blue-200 text-sm md:text-base font-medium">
+              Welcome back, {user.name || user.email}! Manage your equipment listings.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              await logout();
+              navigate("/");
+            }}
+            className="self-start sm:self-auto bg-white/10 hover:bg-white/20 text-white font-semibold text-xs px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer border border-white/20"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
       </div>
 

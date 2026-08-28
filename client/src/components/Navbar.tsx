@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { BellRing, X, PlusCircle, Package, Shield, LayoutDashboard, User as UserIcon } from "lucide-react";
+import { BellRing, X, PlusCircle, Package, Shield, LayoutDashboard, User as UserIcon, LogOut } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 
 function HighLevelModal({
@@ -56,7 +56,7 @@ function HighLevelModal({
 
 export default function Navbar() {
   const [location, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <nav className="w-full bg-white/85 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-50 shadow-sm">
@@ -108,28 +108,41 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-4">
+        <div className="flex items-center gap-2 lg:gap-3">
           {user ? (
-            <button
-              onClick={() =>
-                navigate(user.role === "admin" ? "/admin" : "/dashboard")
-              }
-              className={`font-semibold text-sm transition-colors px-2 lg:px-3 py-1.5 rounded-md hidden md:flex items-center gap-1.5 whitespace-nowrap ${
-                location === "/admin" || location === "/dashboard"
-                  ? "text-blue-600 bg-blue-50/50"
-                  : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
-              }`}
-            >
-              {user.role === "admin" ? (
-                <><Shield className="w-4 h-4" /> Admin</>
-              ) : (
-                <><LayoutDashboard className="w-4 h-4" /> Dashboard</>
-              )}
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() =>
+                  navigate(user.role === "admin" ? "/admin" : "/dashboard")
+                }
+                className={`font-semibold text-sm transition-colors px-2 lg:px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap ${
+                  location === "/admin" || location === "/dashboard"
+                    ? "text-blue-600 bg-blue-50/50"
+                    : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
+                }`}
+              >
+                {user.role === "admin" ? (
+                  <><Shield className="w-4 h-4" /> Admin</>
+                ) : (
+                  <><LayoutDashboard className="w-4 h-4" /> Dashboard</>
+                )}
+              </button>
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate("/");
+                }}
+                title="Log Out"
+                className="font-semibold text-xs text-slate-500 hover:text-red-600 px-2 py-1.5 rounded-md hover:bg-red-50 flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Log Out</span>
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => navigate("/login")}
-              className="font-semibold text-sm transition-colors px-2 lg:px-3 py-1.5 rounded-md hidden md:flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-blue-600 hover:bg-slate-50"
+              className="font-semibold text-sm transition-colors px-2 lg:px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-blue-600 hover:bg-slate-50 cursor-pointer"
             >
               <UserIcon className="w-4 h-4" /> Sign In
             </button>
