@@ -36,4 +36,4 @@ Disallow: /admin
 Disallow: /dashboard
 
 # Sitemap location
-Sitemap: https://www.lambtoncountysports.ca/sitemap.xml
+Sitemap: https://lambtoncountysports.ca/sitemap.xml
