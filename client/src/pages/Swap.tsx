@@ -323,19 +323,21 @@ export default function EquipmentSwap() {
             <button
               onClick={() => {
                 if (!user) {
-                  navigate("/login");
+                  navigate("/login?mode=register");
                 } else {
                   setShowNewListing(true);
                 }
               }}
-              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-lg flex items-center gap-2 shrink-0"
+              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-lg flex items-center gap-2 shrink-0 cursor-pointer"
             >
               {user ? (
                 <>
                   <Plus className="w-5 h-5" /> Post Equipment
                 </>
               ) : (
-                "Sign in to Post"
+                <>
+                  <Plus className="w-5 h-5" /> Sign In / Register to Post
+                </>
               )}
             </button>
           </div>
@@ -433,19 +435,21 @@ export default function EquipmentSwap() {
             <button
               onClick={() => {
                 if (!user) {
-                  navigate("/login");
+                  navigate("/login?mode=register");
                 } else {
                   setShowNewListing(true);
                 }
               }}
-              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-sm inline-flex items-center gap-2"
+              className="bg-[#4A8C2A] hover:bg-[#3A7A1A] text-white font-bold text-sm px-6 py-3 rounded-lg transition-colors shadow-sm inline-flex items-center gap-2 cursor-pointer"
             >
               {user ? (
                 <>
                   <Plus className="w-5 h-5" /> Post Your First Item
                 </>
               ) : (
-                "Sign in to Post"
+                <>
+                  <Plus className="w-5 h-5" /> Sign In / Register to Post
+                </>
               )}
             </button>
           </div>
