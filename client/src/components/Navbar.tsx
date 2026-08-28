@@ -69,9 +69,9 @@ export default function Navbar() {
             <img
               src="/lambton-county-sports-logo.png"
               alt="Lambton County Sports"
-              className="h-10 w-auto"
+              className="h-10 w-auto shrink-0"
             />
-            <span className="font-display font-bold text-xl text-slate-800 hidden sm:block tracking-tight">
+            <span className="font-display font-bold text-xl text-slate-800 hidden sm:block tracking-tight whitespace-nowrap">
               Lambton County Sports
             </span>
           </div>
@@ -108,14 +108,14 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-3">
+        <div className="flex items-center gap-2 lg:gap-3 shrink-0">
           {user ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() =>
                   navigate(user.role === "admin" ? "/admin" : "/dashboard")
                 }
-                className={`font-semibold text-sm transition-colors px-2 lg:px-3 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap ${
+                className={`font-semibold text-sm transition-colors px-2.5 py-1.5 rounded-md flex items-center gap-1.5 whitespace-nowrap ${
                   location === "/admin" || location === "/dashboard"
                     ? "text-blue-600 bg-blue-50/50"
                     : "text-slate-600 hover:text-blue-600 hover:bg-slate-50"
@@ -133,10 +133,10 @@ export default function Navbar() {
                   navigate("/");
                 }}
                 title="Log Out"
-                className="font-semibold text-xs text-slate-500 hover:text-red-600 px-2 py-1.5 rounded-md hover:bg-red-50 flex items-center gap-1 transition-colors cursor-pointer"
+                aria-label="Log Out"
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Log Out</span>
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
