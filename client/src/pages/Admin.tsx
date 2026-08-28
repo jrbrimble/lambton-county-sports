@@ -1812,11 +1812,12 @@ function SubscribersTab() {
       toast.error("No subscribers to export");
       return;
     }
-    const headers = ["ID", "Name", "Email", "Sports Interested In", "Town/Area", "Subscribed At"];
+    const headers = ["ID", "Name", "Email", "Phone", "Sports Interested In", "Town/Area", "Subscribed At"];
     const rows = filteredSubscribers.map(s => [
       s.id,
       `"${(s.name || "").replace(/"/g, '""')}"`,
       `"${s.email.replace(/"/g, '""')}"`,
+      `"${(s.phone || "").replace(/"/g, '""')}"`,
       `"${(s.sports || "").replace(/"/g, '""')}"`,
       `"${(s.townArea || "").replace(/"/g, '""')}"`,
       `"${new Date(s.createdAt).toISOString()}"`,
@@ -1868,7 +1869,7 @@ function SubscribersTab() {
 
         <div className="w-full md:w-72">
           <Input
-            placeholder="Search by name, email, or sport..."
+            placeholder="Search by name, email, phone, or sport..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="h-9 text-xs"
@@ -1886,8 +1887,8 @@ function SubscribersTab() {
             <thead className="bg-muted/50 border-b border-border">
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Subscriber</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Contact</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sports of Interest</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Town / Area</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Date Subscribed</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -1897,7 +1898,12 @@ function SubscribersTab() {
                 <tr key={s.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{s.name || "No name provided"}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{s.email}</p>
+                    <p className="text-xs text-muted-foreground md:hidden">{s.email}</p>
+                    {s.phone && <p className="text-xs text-muted-foreground md:hidden">📞 {s.phone}</p>}
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <p className="text-xs font-mono text-foreground">{s.email}</p>
+                    {s.phone && <p className="text-xs text-muted-foreground">📞 {s.phone}</p>}
                   </td>
                   <td className="px-4 py-3">
                     {s.sports ? (

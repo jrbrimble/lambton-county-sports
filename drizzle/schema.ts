@@ -159,6 +159,7 @@ export const alertSubscribers = pgTable("alert_subscribers", {
   id: serial("id").primaryKey(),
   name: text("name"),
   email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
   sports: text("sports"),
   townArea: varchar("town_area", { length: 128 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -1144,41 +1144,28 @@ export default function Directory() {
             </div>
           </div>
 
-          {/* Inline Form Mockup / Container */}
-          <div className="w-full max-w-md lg:w-[420px] shrink-0 relative z-20">
-            {/* This outer div will eventually just hold the GHL iframe code */}
-            <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full border-t-4 border-[#4A8C2A]">
-              <h3 className="font-bold text-xl text-slate-800 mb-2">
-                Get Registration Alerts
-              </h3>
-              <p className="text-slate-500 text-sm mb-6">
-                Select your sports and we'll handle the rest.
-              </p>
-
-              {/* Mockup Form Fields (To be replaced by GHL iframe) */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
-                    First Name
-                  </label>
-                  <div className="h-11 w-full bg-slate-50 border border-slate-200 rounded-lg"></div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
-                    Email Address
-                  </label>
-                  <div className="h-11 w-full bg-slate-50 border border-slate-200 rounded-lg"></div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1.5">
-                    Sports (Select multiple)
-                  </label>
-                  <div className="h-24 w-full bg-slate-50 border border-slate-200 rounded-lg"></div>
-                </div>
-                <button className="w-full bg-[#4A8C2A] text-white py-3.5 rounded-xl font-bold text-lg shadow-md opacity-60 cursor-not-allowed mt-2">
-                  Subscribe
-                </button>
-              </div>
+          {/* Inline Form Container */}
+          <div className="w-full max-w-lg lg:w-[480px] shrink-0 relative z-20">
+            <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 w-full border-t-4 border-[#4A8C2A] overflow-hidden">
+              <iframe
+                src="https://link.convertmorebusiness.com/widget/form/ly6veWDO6ycXFqgRSlzP"
+                style={{ width: "100%", height: "100%", minHeight: "485px", border: "none", borderRadius: "8px" }}
+                id="inline-ly6veWDO6ycXFqgRSlzP"
+                data-layout="{'id':'INLINE'}"
+                data-trigger-type="alwaysShow"
+                data-trigger-value=""
+                data-activation-type="alwaysActivated"
+                data-activation-value=""
+                data-deactivation-type="neverDeactivate"
+                data-deactivation-value=""
+                data-form-name="Never Miss A Signup"
+                data-height="485"
+                data-layout-iframe-id="inline-ly6veWDO6ycXFqgRSlzP"
+                data-form-id="ly6veWDO6ycXFqgRSlzP"
+                data-cookie-consent="true"
+                data-cookie-consent-provider="auto"
+                title="Never Miss A Signup"
+              />
             </div>
           </div>
         </div>

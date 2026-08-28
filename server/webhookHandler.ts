@@ -78,9 +78,10 @@ export async function alertSubscriptionWebhookHandler(req: Request, res: Respons
       return String(val || "").trim();
     };
 
-    const name = parseField(data.name || data.firstName || data.fullName || data.first_name);
+    const name = parseField(data.full_name || data.fullName || data.name || data.firstName || data.first_name);
     const email = parseField(data.email);
-    const sports = parseField(data.sports || data.sportName || data.sports_interested || data.sportsInterested);
+    const phone = parseField(data.phone || data.phoneNumber || data.phone_number);
+    const sports = parseField(data.sportName || data.sports || data.sports_interested || data.sportsInterested);
     const townArea = parseField(data.townArea || data.town || data.town_area);
 
     if (!email) {
@@ -91,6 +92,7 @@ export async function alertSubscriptionWebhookHandler(req: Request, res: Respons
     await db.insert(alertSubscribers).values({
       name: name || null,
       email: email,
+      phone: phone || null,
       sports: sports || null,
       townArea: townArea || null,
     });
