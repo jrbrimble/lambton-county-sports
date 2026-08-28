@@ -186,6 +186,10 @@ export default function Directory() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
 
   useEffect(() => {
+    document.title = "Lambton County Sports — All Kids Sports, All In One Place | Sarnia & Lambton County";
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImageIdx(prev => (prev + 1) % HERO_IMAGES.length);
     }, 3000);

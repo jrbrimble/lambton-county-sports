@@ -190,6 +190,10 @@ export default function SeasonCalendar() {
   const { data: programs, isLoading } = trpc.programs.list.useQuery({});
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
 
+  React.useEffect(() => {
+    document.title = "Registration Calendar & Key Dates — Lambton County Sports";
+  }, []);
+
   // Default to current year, allow toggling
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();

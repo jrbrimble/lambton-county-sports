@@ -286,6 +286,10 @@ export default function EquipmentSwap() {
   const [selectedCondition, setSelectedCondition] = useState("");
   const [showNewListing, setShowNewListing] = useState(false);
 
+  React.useEffect(() => {
+    document.title = "Equipment Swap Board — Buy, Sell & Donate Gear | Lambton County Sports";
+  }, []);
+
   const { data: listings, isLoading } = trpc.swap.list.useQuery({
     sport: selectedSport || undefined,
     condition: selectedCondition || undefined,
