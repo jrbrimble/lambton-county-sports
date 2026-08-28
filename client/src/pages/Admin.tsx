@@ -54,6 +54,8 @@ import {
   UsersIcon,
   Package,
   Download,
+  BellRing,
+  Mail,
 } from "lucide-react";
 import type {
   SportsProgram,
@@ -1760,6 +1762,225 @@ function MarketplaceTab() {
   );
 }
 
+
+// ── Subscribers Tab ──────────────────────────────────────────────────────────
+
+function SubscribersTab() {
+  const utils = trpc.useUtils();
+  const { data: subscribers, isLoading } = trpc.subscribers.list.useQuery();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSport, setSelectedSport] = useState<string>("all");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const deleteMut = trpc.subscribers.delete.useMutation({
+    onSuccess: () => {
+      utils.subscribers.list.invalidate();
+      utils.subscribers.count.invalidate();
+      toast.success("Subscriber removed");
+      setDeleteId(null);
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const allSports = Array.from(
+    new Set(
+      (subscribers || [])
+        .flatMap(s => (s.sports ? s.sports.split(",").map(sp => sp.trim()) : []))
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const filteredSubscribers = (subscribers || []).filter(s => {
+    if (selectedSport !== "all") {
+      if (!s.sports || !s.sports.toLowerCase().includes(selectedSport.toLowerCase())) {
+        return false;
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = s.name?.toLowerCase().includes(q);
+      const matchEmail = s.email?.toLowerCase().includes(q);
+      const matchSports = s.sports?.toLowerCase().includes(q);
+      const matchTown = s.townArea?.toLowerCase().includes(q);
+      return matchName || matchEmail || matchSports || matchTown;
+    }
+    return true;
+  });
+
+  const exportToCSV = () => {
+    if (!subscribers || subscribers.length === 0) {
+      toast.error("No subscribers to export");
+      return;
+    }
+    const headers = ["ID", "Name", "Email", "Sports Interested In", "Town/Area", "Subscribed At"];
+    const rows = filteredSubscribers.map(s => [
+      s.id,
+      `"${(s.name || "").replace(/"/g, '""')}"`,
+      `"${s.email.replace(/"/g, '""')}"`,
+      `"${(s.sports || "").replace(/"/g, '""')}"`,
+      `"${(s.townArea || "").replace(/"/g, '""')}"`,
+      `"${new Date(s.createdAt).toISOString()}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `alert_subscribers_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("CSV exported successfully");
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-semibold">Registration Alert Subscribers</h2>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {subscribers?.length ?? 0} parents & community members subscribed to registration alerts
+          </p>
+        </div>
+        <Button onClick={exportToCSV} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export to CSV
+        </Button>
+      </div>
+
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={selectedSport} onValueChange={setSelectedSport}>
+            <SelectTrigger className="w-48 h-9 text-xs">
+              <SelectValue placeholder="Filter by Sport" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sports ({subscribers?.length ?? 0})</SelectItem>
+              {allSports.map(sport => (
+                <SelectItem key={sport} value={sport}>
+                  {sport}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Search by name, email, or sport..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="h-9 text-xs"
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border overflow-hidden bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Subscriber</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sports of Interest</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Town / Area</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Date Subscribed</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredSubscribers.map(s => (
+                <tr key={s.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-foreground">{s.name || "No name provided"}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{s.email}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {s.sports ? (
+                      <div className="flex flex-wrap gap-1">
+                        {s.sports.split(",").map((sport, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[11px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20"
+                          >
+                            {sport.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">All Sports / General</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
+                    {s.townArea || "—"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs hidden lg:table-cell">
+                    {new Date(s.createdAt).toLocaleDateString("en-CA", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeleteId(s.id)}
+                        title="Remove subscriber"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredSubscribers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-muted-foreground">
+                    {subscribers?.length === 0
+                      ? "No subscribers yet. Once users sign up via the 'Never Miss A Signup' form, they will appear here!"
+                      : "No subscribers match your search or filter."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteId !== null} onOpenChange={o => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this subscriber?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This user will no longer receive alerts and will be removed from the list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) deleteMut.mutate({ id: deleteId });
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+
 //  Main Admin Page
 
 // Need ChevronRight import
@@ -1772,6 +1993,9 @@ export default function Admin() {
     enabled: isAuthenticated,
   });
   const pendingProgramsCount = allPrograms?.filter(p => !p.isActive).length ?? 0;
+  const { data: subscriberCount } = trpc.subscribers.count.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
   const { data: pendingCount } = trpc.changes.pendingCount.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -1883,6 +2107,15 @@ export default function Admin() {
               <Package className="h-4 w-4" />
               Marketplace
             </TabsTrigger>
+            <TabsTrigger value="subscribers" className="gap-2">
+              <BellRing className="h-4 w-4" />
+              Alert Subscribers
+              {(subscriberCount?.count ?? 0) > 0 && (
+                <span className="ml-1 bg-muted-foreground/20 text-foreground text-xs font-bold rounded-full px-1.5 py-0.5 leading-none">
+                  {subscriberCount?.count}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="programs">
@@ -1902,6 +2135,9 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="marketplace">
             <MarketplaceTab />
+          </TabsContent>
+          <TabsContent value="subscribers">
+            <SubscribersTab />
           </TabsContent>
         </Tabs>
       </div>

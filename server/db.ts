@@ -14,6 +14,9 @@ import {
   SportsProgram,
   SwapListing,
   User,
+  alertSubscribers,
+  AlertSubscriber,
+  InsertAlertSubscriber,
   adSlots,
   cronConfig,
   programChanges,
@@ -521,4 +524,36 @@ export async function listAllSwapListings() {
     .from(swapListings)
     .leftJoin(users, eq(swapListings.userId, users.id))
     .orderBy(desc(swapListings.createdAt));
+}
+
+// ── Alert Subscribers ──────────────────────────────────────────────────────────
+
+export async function createAlertSubscriber(data: InsertAlertSubscriber): Promise<number> {
+  const db = getDb();
+  const result = await db
+    .insert(alertSubscribers)
+    .values(data)
+    .returning({ id: alertSubscribers.id });
+  return result[0].id;
+}
+
+export async function listAlertSubscribers(): Promise<AlertSubscriber[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(alertSubscribers)
+    .orderBy(desc(alertSubscribers.createdAt));
+}
+
+export async function deleteAlertSubscriber(id: number): Promise<void> {
+  const db = getDb();
+  await db.delete(alertSubscribers).where(eq(alertSubscribers.id, id));
+}
+
+export async function countAlertSubscribers(): Promise<number> {
+  const db = getDb();
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(alertSubscribers);
+  return Number(result[0]?.count ?? 0);
 }

@@ -5,7 +5,10 @@ import { appRouter } from "../server/routers.js";
 import { createContext } from "../server/_core/context.js";
 import { registerAuthRoutes } from "../server/_core/auth.js";
 import { monthlyUrlCheckHandler } from "../server/cronHandler.js";
-import { programSubmissionWebhookHandler } from "../server/webhookHandler.js";
+import {
+  programSubmissionWebhookHandler,
+  alertSubscriptionWebhookHandler,
+} from "../server/webhookHandler.js";
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -37,7 +40,8 @@ app.use(
 // Cron endpoint (protected by CRON_SECRET)
 app.all("/api/cron/monthly-url-check", monthlyUrlCheckHandler);
 
-// Webhook endpoint from GoHighLevel
+// Webhook endpoints from GoHighLevel
 app.all("/api/webhook/program-submission", programSubmissionWebhookHandler);
+app.all("/api/webhook/alert-subscription", alertSubscriptionWebhookHandler);
 
 export default app;

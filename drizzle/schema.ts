@@ -152,3 +152,17 @@ export const swapListings = pgTable("swap_listings", {
 
 export type SwapListing = typeof swapListings.$inferSelect;
 export type InsertSwapListing = typeof swapListings.$inferInsert;
+
+// ── Alert Subscribers ──────────────────────────────────────────────────────────
+
+export const alertSubscribers = pgTable("alert_subscribers", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  email: varchar("email", { length: 320 }).notNull(),
+  sports: text("sports"),
+  townArea: varchar("town_area", { length: 128 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AlertSubscriber = typeof alertSubscribers.$inferSelect;
+export type InsertAlertSubscriber = typeof alertSubscribers.$inferInsert;

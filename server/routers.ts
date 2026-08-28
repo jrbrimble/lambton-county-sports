@@ -29,6 +29,9 @@ import {
   createSwapListing,
   deleteSwapListing,
   listAllSwapListings,
+  listAlertSubscribers,
+  deleteAlertSubscriber,
+  countAlertSubscribers,
 } from "./db.js";
 import { ENV } from "./_core/env.js";
 
@@ -328,6 +331,22 @@ export const appRouter = router({
         // Delete user's listings first
         await db.delete(swapListings).where(eq(swapListings.userId, input.id));
         await db.delete(users).where(eq(users.id, input.id));
+        return { success: true };
+      }),
+  }),
+
+  // ── Alert Subscribers (Admin) ───────────────────────────────────────────────
+  subscribers: router({
+    list: adminProcedure.query(async () => {
+      return await listAlertSubscribers();
+    }),
+    count: adminProcedure.query(async () => {
+      return { count: await countAlertSubscribers() };
+    }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteAlertSubscriber(input.id);
         return { success: true };
       }),
   }),
