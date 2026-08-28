@@ -122,10 +122,10 @@ export async function sponsorshipInquiryWebhookHandler(req: Request, res: Respon
     };
 
     const name = parseField(data.full_name || data.fullName || data.name || data.firstName || data.first_name);
-    const businessName = parseField(data.business_name || data.businessName || data.company_name || data.companyName || data.organization);
+    const businessName = parseField(data.organization || data.business_name || data.businessName || data.company_name || data.companyName);
     const email = parseField(data.email);
     const phone = parseField(data.phone || data.phoneNumber || data.phone_number);
-    const message = parseField(data.message || data.notes || data.comments || data.inquiry);
+    const message = parseField(data["sponsorship-notes"] || data.sponsorship_notes || data.message || data.notes || data.comments || data.inquiry);
 
     if (!email && !businessName && !name) {
       return res.status(400).json({ error: "Inquiry must include contact details" });

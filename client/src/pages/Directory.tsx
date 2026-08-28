@@ -1228,7 +1228,7 @@ export default function Directory() {
                 business directly in our directory.
               </p>
               <HighLevelModal
-                formId="enquire_sponsorship"
+                formId="03pw73IXAfBolrbEW1rO"
                 title="Enquire About Sponsorship"
                 trigger={
                   <button className="inline-block bg-[#4A8C2A] text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-[#3A7A1A] transition-colors shadow-md w-full sm:w-auto text-center">
