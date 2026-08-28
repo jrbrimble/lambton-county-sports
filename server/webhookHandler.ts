@@ -121,11 +121,84 @@ export async function sponsorshipInquiryWebhookHandler(req: Request, res: Respon
       return String(val || "").trim();
     };
 
-    const name = parseField(data.full_name || data.fullName || data.name || data.firstName || data.first_name);
-    const businessName = parseField(data.organization || data.business_name || data.businessName || data.company_name || data.companyName);
-    const email = parseField(data.email);
-    const phone = parseField(data.phone || data.phoneNumber || data.phone_number);
-    const message = parseField(data["sponsorship-notes"] || data.sponsorship_notes || data.message || data.notes || data.comments || data.inquiry);
+    // Deep search helper to find fields by multiple possible keys or partial matches
+    const findDeepValue = (obj: any, keys: string[], partialKeyword?: string): string => {
+      if (!obj || typeof obj !== "object") return "";
+
+      // 1. Direct key match (case-insensitive & stripped)
+      const searchInObj = (targetObj: any): string => {
+        if (!targetObj || typeof targetObj !== "object") return "";
+        for (const k of Object.keys(targetObj)) {
+          const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, "");
+          for (const target of keys) {
+            const cleanTarget = target.toLowerCase().replace(/[^a-z0-9]/g, "");
+            if (cleanK === cleanTarget && targetObj[k]) {
+              return parseField(targetObj[k]);
+            }
+          }
+        }
+        return "";
+      };
+
+      let val = searchInObj(obj);
+      if (val) return val;
+
+      // 2. Search in common nested GHL objects (customData, contact, fields)
+      if (obj.customData) {
+        val = searchInObj(obj.customData);
+        if (val) return val;
+      }
+      if (obj.contact) {
+        val = searchInObj(obj.contact);
+        if (val) return val;
+      }
+      if (obj.fields) {
+        val = searchInObj(obj.fields);
+        if (val) return val;
+      }
+
+      // 3. Optional partial keyword match (e.g. key containing "note" or "message")
+      if (partialKeyword) {
+        const pKey = partialKeyword.toLowerCase();
+        const findPartial = (targetObj: any): string => {
+          for (const [k, v] of Object.entries(targetObj)) {
+            if (k.toLowerCase().includes(pKey) && v) {
+              return parseField(v);
+            }
+          }
+          return "";
+        };
+
+        val = findPartial(obj);
+        if (val) return val;
+        if (obj.customData) {
+          val = findPartial(obj.customData);
+          if (val) return val;
+        }
+      }
+
+      return "";
+    };
+
+    const name = findDeepValue(data, ["full_name", "fullName", "name", "firstName", "first_name", "contact_name"]);
+    const businessName = findDeepValue(data, ["organization", "business_name", "businessName", "company_name", "companyName", "company", "business"]);
+    const email = findDeepValue(data, ["email", "email_address", "emailAddress"]);
+    const phone = findDeepValue(data, ["phone", "phoneNumber", "phone_number", "mobile", "cell"]);
+    const message = findDeepValue(
+      data,
+      [
+        "sponsorship-notes",
+        "sponsorship_notes",
+        "sponsorshipnotes",
+        "message",
+        "notes",
+        "comments",
+        "inquiry",
+        "Message / Notes",
+        "Message/Notes",
+      ],
+      "note" // fallback to any key with "note" or "message"
+    ) || findDeepValue(data, [], "message");
 
     if (!email && !businessName && !name) {
       return res.status(400).json({ error: "Inquiry must include contact details" });
@@ -141,7 +214,13 @@ export async function sponsorshipInquiryWebhookHandler(req: Request, res: Respon
       status: "new",
     });
 
-    console.log("[Webhook] Successfully saved sponsorship inquiry from:", businessName || name || email);
+    console.log("[Webhook] Successfully saved sponsorship inquiry:", {
+      businessName,
+      name,
+      email,
+      message: message ? message.substring(0, 30) + "..." : "empty",
+    });
+
     return res.status(200).json({ success: true, message: "Sponsorship inquiry saved successfully." });
 
   } catch (err: any) {
