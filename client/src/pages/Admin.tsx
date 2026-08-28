@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -113,21 +113,25 @@ function ProgramDialog({
   program?: SportsProgram;
 }) {
   const utils = trpc.useUtils();
-  const [form, setForm] = useState<ProgramFormData>(
-    program
-      ? {
-          sportName: program.sportName,
-          organization: program.organization,
-          ageGroups: program.ageGroups,
-          registrationOpenDate: toInputDate(program.registrationOpenDate),
-          registrationCloseDate: toInputDate(program.registrationCloseDate),
-          programStartDate: toInputDate(program.programStartDate),
-          registrationUrl: program.registrationUrl,
-          notes: program.notes ?? "",
-          isActive: program.isActive,
-        }
-      : emptyProgram
-  );
+  const [form, setForm] = useState<ProgramFormData>(emptyProgram);
+
+  useEffect(() => {
+    if (program) {
+      setForm({
+        sportName: program.sportName || "",
+        organization: program.organization || "",
+        ageGroups: program.ageGroups || "",
+        registrationOpenDate: toInputDate(program.registrationOpenDate),
+        registrationCloseDate: toInputDate(program.registrationCloseDate),
+        programStartDate: toInputDate(program.programStartDate),
+        registrationUrl: program.registrationUrl || "",
+        notes: program.notes ?? "",
+        isActive: program.isActive,
+      });
+    } else {
+      setForm(emptyProgram);
+    }
+  }, [program, open]);
 
   const createMut = trpc.programs.create.useMutation({
     onSuccess: () => {
@@ -259,30 +263,50 @@ function ProgramDialog({
             <Textarea
               value={form.notes}
               onChange={e => setForm({ ...form, notes: e.target.value })}
-              rows={2}
-              placeholder="Optional notes visible to parents"
+              rows={3}
+              placeholder="Optional notes or submission details"
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
             <Switch
               checked={form.isActive}
               onCheckedChange={v => setForm({ ...form, isActive: v })}
             />
-            <Label>Active (visible in public directory)</Label>
+            <div>
+              <Label className="font-semibold cursor-pointer">
+                {form.isActive ? "Active (Live on public directory)" : "Inactive / Pending Review"}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {form.isActive
+                  ? "This program is published and viewable by all website visitors."
+                  : "This program is hidden from the public directory until you activate it."}
+              </p>
+            </div>
           </div>
-          
-            {program?.submitterName && (
-              <div className="bg-slate-50 p-4 rounded-lg mt-4 border border-slate-200">
-                <h4 className="font-semibold text-sm mb-2 text-slate-700">Submitter Information</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="text-slate-500">Name:</span> {program.submitterName}</div>
-                  <div><span className="text-slate-500">Phone:</span> {program.submitterPhone || "N/A"}</div>
-                  <div className="col-span-2"><span className="text-slate-500">Email:</span> {program.submitterEmail}</div>
+
+          {(program?.submitterName || program?.submitterEmail || program?.submitterPhone) && (
+            <div className="bg-amber-500/10 p-4 rounded-lg border border-amber-500/30">
+              <h4 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                <UsersIcon className="h-4 w-4" /> Submitter Information
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-sm text-foreground">
+                <div>
+                  <span className="text-muted-foreground text-xs block">Name</span>
+                  <span className="font-medium">{program.submitterName || "Not provided"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">Phone</span>
+                  <span className="font-medium">{program.submitterPhone || "Not provided"}</span>
+                </div>
+                <div className="col-span-2 mt-1">
+                  <span className="text-muted-foreground text-xs block">Email</span>
+                  <span className="font-medium">{program.submitterEmail || "Not provided"}</span>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            <DialogFooter>
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -302,10 +326,21 @@ function ProgramDialog({
 function ProgramsTab() {
   const utils = trpc.useUtils();
   const { data: programs, isLoading } = trpc.programs.listAll.useQuery();
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "pending">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const deleteMut = trpc.programs.delete.useMutation({
     onSuccess: () => {
       utils.programs.listAll.invalidate();
       toast.success("Program deleted");
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const approveMut = trpc.programs.update.useMutation({
+    onSuccess: () => {
+      utils.programs.listAll.invalidate();
+      toast.success("Program approved and published to the live directory!");
     },
     onError: e => toast.error(e.message),
   });
@@ -323,19 +358,210 @@ function ProgramsTab() {
     setDialogOpen(true);
   }
 
+  const pendingPrograms = programs?.filter(p => !p.isActive) || [];
+  const activePrograms = programs?.filter(p => p.isActive) || [];
+
+  const filteredPrograms = programs?.filter(p => {
+    if (filterStatus === "active" && !p.isActive) return false;
+    if (filterStatus === "pending" && p.isActive) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchSport = p.sportName?.toLowerCase().includes(q);
+      const matchOrg = p.organization?.toLowerCase().includes(q);
+      const matchTown = p.townArea?.toLowerCase().includes(q);
+      const matchSubmitter = p.submitterName?.toLowerCase().includes(q) || p.submitterEmail?.toLowerCase().includes(q);
+      return matchSport || matchOrg || matchTown || matchSubmitter;
+    }
+    return true;
+  }) || [];
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="font-display text-2xl font-semibold">Programs</h2>
+          <h2 className="font-display text-2xl font-semibold">Programs Management</h2>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {programs?.length ?? 0} total listings
+            {programs?.length ?? 0} total programs ({activePrograms.length} active, {pendingPrograms.length} pending review)
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="bg-primary">
           <Plus className="h-4 w-4 mr-2" />
           Add Program
         </Button>
+      </div>
+
+      {/* PENDING SUBMISSIONS ALERT BANNER */}
+      {pendingPrograms.length > 0 && (
+        <div className="mb-8 p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 shadow-sm animate-in fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+              </span>
+              <h3 className="font-display font-bold text-lg text-foreground flex items-center gap-2">
+                New User Submissions Waiting for Review ({pendingPrograms.length})
+              </h3>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-900 dark:text-amber-200">
+              Not Live Yet
+            </span>
+          </div>
+
+          <p className="text-xs text-muted-foreground mb-4">
+            These programs were submitted via the "Submit A Program" form. Review their details, then click <strong>Approve & Make Live</strong> to publish them to the directory!
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {pendingPrograms.map(p => (
+              <div
+                key={p.id}
+                className="p-4 bg-card rounded-xl border border-amber-500/30 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="font-bold text-foreground text-base">
+                      {p.sportName}
+                    </span>
+                    <span className="text-[10px] uppercase font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                      Pending
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-primary mb-2">
+                    {p.organization}
+                  </p>
+
+                  <div className="space-y-1 text-xs text-muted-foreground mb-3">
+                    {p.townArea && (
+                      <p className="flex items-center gap-1.5">
+                        <span className="font-medium text-foreground">Town:</span> {p.townArea}
+                      </p>
+                    )}
+                    {p.ageGroups && (
+                      <p className="flex items-center gap-1.5">
+                        <span className="font-medium text-foreground">Ages:</span> {p.ageGroups}
+                      </p>
+                    )}
+                    {p.registrationUrl && (
+                      <p className="truncate flex items-center gap-1.5">
+                        <span className="font-medium text-foreground">Reg Link:</span>{" "}
+                        <a
+                          href={p.registrationUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                        >
+                          Visit Link <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </p>
+                    )}
+                  </div>
+
+                  {(p.submitterName || p.submitterEmail || p.submitterPhone) && (
+                    <div className="pt-2.5 pb-1 border-t border-border text-xs">
+                      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                        Submitted By:
+                      </p>
+                      {p.submitterName && <p className="font-medium text-foreground">👤 {p.submitterName}</p>}
+                      {p.submitterEmail && <p className="text-muted-foreground">✉️ {p.submitterEmail}</p>}
+                      {p.submitterPhone && <p className="text-muted-foreground">📞 {p.submitterPhone}</p>}
+                    </div>
+                  )}
+
+                  {p.notes && (
+                    <div className="mt-2 p-2 bg-muted/40 rounded text-xs text-muted-foreground">
+                      <p className="font-semibold text-foreground text-[10px] uppercase">Notes / Raw Data:</p>
+                      <p className="line-clamp-2">{p.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-border flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 shadow-sm"
+                    onClick={() => approveMut.mutate({ id: p.id, isActive: true })}
+                    disabled={approveMut.isPending}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                    Approve & Make Live
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9 px-3"
+                    onClick={() => openEdit(p)}
+                    title="Review & Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteId(p.id)}
+                    title="Reject & Delete"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border self-start">
+          <button
+            onClick={() => setFilterStatus("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              filterStatus === "all"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All Programs ({programs?.length ?? 0})
+          </button>
+          <button
+            onClick={() => setFilterStatus("active")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              filterStatus === "active"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Active ({activePrograms.length})
+          </button>
+          <button
+            onClick={() => setFilterStatus("pending")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              filterStatus === "pending"
+                ? "bg-amber-500 text-white shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Pending Review
+            {pendingPrograms.length > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                filterStatus === "pending" ? "bg-white text-amber-600" : "bg-amber-500/20 text-amber-600"
+              }`}>
+                {pendingPrograms.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Search programs or submitters..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="h-9 text-xs"
+          />
+        </div>
       </div>
 
       {isLoading ? (
@@ -362,17 +588,20 @@ function ProgramsTab() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">
                   Status
                 </th>
-                <th className="px-4 py-3" />
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {programs?.map(p => (
+              {filteredPrograms.map(p => (
                 <tr key={p.id} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{p.sportName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.organization}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{p.organization}</p>
+                    {p.submitterName && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                        👤 Submitted by {p.submitterName}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {p.ageGroups}
@@ -384,18 +613,33 @@ function ProgramsTab() {
                     {formatDate(p.registrationCloseDate)}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={p.isActive ? "badge-open" : "badge-closed"}
-                    >
-                      {p.isActive ? "Active" : "Inactive"}
-                    </span>
+                    {p.isActive ? (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 inline-flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Live
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 inline-flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" /> Pending Review
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
+                      {!p.isActive && (
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-2.5"
+                          onClick={() => approveMut.mutate({ id: p.id, isActive: true })}
+                          disabled={approveMut.isPending}
+                        >
+                          Approve
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => openEdit(p)}
+                        title="Edit program"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -404,6 +648,7 @@ function ProgramsTab() {
                         variant="ghost"
                         className="text-destructive hover:text-destructive"
                         onClick={() => setDeleteId(p.id)}
+                        title="Delete program"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -411,13 +656,13 @@ function ProgramsTab() {
                   </td>
                 </tr>
               ))}
-              {programs?.length === 0 && (
+              {filteredPrograms.length === 0 && (
                 <tr>
                   <td
                     colSpan={6}
                     className="text-center py-12 text-muted-foreground"
                   >
-                    No programs yet. Click "Add Program" to get started.
+                    No programs match your search or filter.
                   </td>
                 </tr>
               )}
@@ -464,7 +709,8 @@ function ProgramsTab() {
   );
 }
 
-//  Changes Tab
+
+// ── Changes Tab ──────────────────────────────────────────────────────────────
 
 function ChangesTab() {
   const utils = trpc.useUtils();
@@ -593,6 +839,7 @@ function ChangesTab() {
     </div>
   );
 }
+
 
 //  Ad Slot Form
 
@@ -1521,6 +1768,10 @@ import { ChevronRight } from "lucide-react";
 export default function Admin() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
+  const { data: allPrograms } = trpc.programs.listAll.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+  const pendingProgramsCount = allPrograms?.filter(p => !p.isActive).length ?? 0;
   const { data: pendingCount } = trpc.changes.pendingCount.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -1598,9 +1849,14 @@ export default function Admin() {
       <div className="container py-8">
         <Tabs defaultValue="programs">
           <TabsList className="mb-8 bg-card border border-border">
-            <TabsTrigger value="programs" className="gap-2">
+            <TabsTrigger value="programs" className="gap-2 relative">
               <Calendar className="h-4 w-4" />
               Programs
+              {pendingProgramsCount > 0 && (
+                <span className="ml-1 bg-amber-500 text-white text-xs font-bold rounded-full px-2 py-0.5 leading-none">
+                  {pendingProgramsCount} new
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="changes" className="gap-2 relative">
               <AlertTriangle className="h-4 w-4" />
