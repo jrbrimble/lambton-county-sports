@@ -1987,6 +1987,257 @@ function SubscribersTab() {
 }
 
 
+
+// ── Sponsorship Inquiries Tab ──────────────────────────────────────────────────
+
+function SponsorshipInquiriesTab() {
+  const utils = trpc.useUtils();
+  const { data: inquiries, isLoading } = trpc.sponsors.list.useQuery();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const deleteMut = trpc.sponsors.delete.useMutation({
+    onSuccess: () => {
+      utils.sponsors.list.invalidate();
+      utils.sponsors.count.invalidate();
+      toast.success("Inquiry removed");
+      setDeleteId(null);
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const updateStatusMut = trpc.sponsors.updateStatus.useMutation({
+    onSuccess: () => {
+      utils.sponsors.list.invalidate();
+      utils.sponsors.count.invalidate();
+      toast.success("Status updated");
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const filteredInquiries = (inquiries || []).filter(item => {
+    if (statusFilter !== "all" && item.status !== statusFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = item.name?.toLowerCase().includes(q);
+      const matchBiz = item.businessName?.toLowerCase().includes(q);
+      const matchEmail = item.email?.toLowerCase().includes(q);
+      const matchPhone = item.phone?.toLowerCase().includes(q);
+      const matchMsg = item.message?.toLowerCase().includes(q);
+      return matchName || matchBiz || matchEmail || matchPhone || matchMsg;
+    }
+    return true;
+  });
+
+  const newInquiriesCount = (inquiries || []).filter(i => i.status === "new").length;
+
+  const exportToCSV = () => {
+    if (!inquiries || inquiries.length === 0) {
+      toast.error("No inquiries to export");
+      return;
+    }
+    const headers = ["ID", "Business / Organization", "Contact Name", "Email", "Phone", "Status", "Message / Notes", "Received At"];
+    const rows = filteredInquiries.map(i => [
+      i.id,
+      `"${(i.businessName || "").replace(/"/g, '""')}"`,
+      `"${(i.name || "").replace(/"/g, '""')}"`,
+      `"${(i.email || "").replace(/"/g, '""')}"`,
+      `"${(i.phone || "").replace(/"/g, '""')}"`,
+      `"${(i.status || "").replace(/"/g, '""')}"`,
+      `"${(i.message || "").replace(/"/g, '""')}"`,
+      `"${new Date(i.createdAt).toISOString()}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `sponsorship_inquiries_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("CSV exported successfully");
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-semibold">Sponsorship & Advertising Inquiries</h2>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {inquiries?.length ?? 0} businesses & sponsors have contacted you ({newInquiriesCount} new)
+          </p>
+        </div>
+        <Button onClick={exportToCSV} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export to CSV
+        </Button>
+      </div>
+
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border self-start">
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            All ({inquiries?.length ?? 0})
+          </button>
+          <button
+            onClick={() => setStatusFilter("new")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              statusFilter === "new" ? "bg-amber-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            New
+            {newInquiriesCount > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                statusFilter === "new" ? "bg-white text-amber-600" : "bg-amber-500/20 text-amber-600"
+              }`}>
+                {newInquiriesCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setStatusFilter("contacted")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "contacted" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Contacted
+          </button>
+          <button
+            onClick={() => setStatusFilter("closed")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              statusFilter === "closed" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Closed
+          </button>
+        </div>
+
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Search business, contact, email..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="h-9 text-xs"
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-border overflow-hidden bg-card">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b border-border">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Business / Sponsor</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Contact Details</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Message / Notes</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Received</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filteredInquiries.map(item => (
+                <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-bold text-foreground text-sm">{item.businessName || "Unnamed Business"}</p>
+                    <p className="text-xs text-muted-foreground">Attn: {item.name || "N/A"}</p>
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    <p className="font-mono text-foreground">{item.email}</p>
+                    {item.phone && <p className="text-muted-foreground mt-0.5">📞 {item.phone}</p>}
+                  </td>
+                  <td className="px-4 py-3 text-xs max-w-xs">
+                    <p className="text-muted-foreground line-clamp-3">{item.message || "No specific message provided."}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Select
+                      value={item.status}
+                      onValueChange={val => updateStatusMut.mutate({ id: item.id, status: val })}
+                    >
+                      <SelectTrigger className="h-7 w-28 text-xs font-semibold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">🟡 New</SelectItem>
+                        <SelectItem value="contacted">🔵 Contacted</SelectItem>
+                        <SelectItem value="closed">⚪ Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs hidden lg:table-cell">
+                    {new Date(item.createdAt).toLocaleDateString("en-CA", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeleteId(item.id)}
+                        title="Remove inquiry"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredInquiries.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                    {inquiries?.length === 0
+                      ? "No sponsorship inquiries yet. Submissions from the 'Become a Sponsor' form will appear here!"
+                      : "No inquiries match your search or filter."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteId !== null} onOpenChange={o => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this inquiry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This inquiry will be permanently deleted from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) deleteMut.mutate({ id: deleteId });
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+
 //  Main Admin Page
 
 // Need ChevronRight import
@@ -1999,6 +2250,9 @@ export default function Admin() {
     enabled: isAuthenticated,
   });
   const pendingProgramsCount = allPrograms?.filter(p => !p.isActive).length ?? 0;
+  const { data: sponsorInquiriesCount } = trpc.sponsors.count.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
   const { data: subscriberCount } = trpc.subscribers.count.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -2122,6 +2376,15 @@ export default function Admin() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="sponsorship" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Sponsorship Inquiries
+              {(sponsorInquiriesCount?.count ?? 0) > 0 && (
+                <span className="ml-1 bg-amber-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 leading-none">
+                  {sponsorInquiriesCount?.count}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="programs">
@@ -2144,6 +2407,9 @@ export default function Admin() {
           </TabsContent>
           <TabsContent value="subscribers">
             <SubscribersTab />
+          </TabsContent>
+          <TabsContent value="sponsorship">
+            <SponsorshipInquiriesTab />
           </TabsContent>
         </Tabs>
       </div>

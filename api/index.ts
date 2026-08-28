@@ -8,6 +8,7 @@ import { monthlyUrlCheckHandler } from "../server/cronHandler.js";
 import {
   programSubmissionWebhookHandler,
   alertSubscriptionWebhookHandler,
+  sponsorshipInquiryWebhookHandler,
 } from "../server/webhookHandler.js";
 
 const app = express();
@@ -43,5 +44,6 @@ app.all("/api/cron/monthly-url-check", monthlyUrlCheckHandler);
 // Webhook endpoints from GoHighLevel
 app.all("/api/webhook/program-submission", programSubmissionWebhookHandler);
 app.all("/api/webhook/alert-subscription", alertSubscriptionWebhookHandler);
+app.all("/api/webhook/sponsor-inquiry", sponsorshipInquiryWebhookHandler);
 
 export default app;

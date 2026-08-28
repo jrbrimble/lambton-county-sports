@@ -17,6 +17,9 @@ import {
   alertSubscribers,
   AlertSubscriber,
   InsertAlertSubscriber,
+  sponsorshipInquiries,
+  SponsorshipInquiry,
+  InsertSponsorshipInquiry,
   adSlots,
   cronConfig,
   programChanges,
@@ -555,5 +558,45 @@ export async function countAlertSubscribers(): Promise<number> {
   const result = await db
     .select({ count: sql<number>`count(*)` })
     .from(alertSubscribers);
+  return Number(result[0]?.count ?? 0);
+}
+
+// ── Sponsorship Inquiries ──────────────────────────────────────────────────────
+
+export async function createSponsorshipInquiry(data: InsertSponsorshipInquiry): Promise<number> {
+  const db = getDb();
+  const result = await db
+    .insert(sponsorshipInquiries)
+    .values(data)
+    .returning({ id: sponsorshipInquiries.id });
+  return result[0].id;
+}
+
+export async function listSponsorshipInquiries(): Promise<SponsorshipInquiry[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(sponsorshipInquiries)
+    .orderBy(desc(sponsorshipInquiries.createdAt));
+}
+
+export async function updateSponsorshipInquiryStatus(id: number, status: string): Promise<void> {
+  const db = getDb();
+  await db
+    .update(sponsorshipInquiries)
+    .set({ status })
+    .where(eq(sponsorshipInquiries.id, id));
+}
+
+export async function deleteSponsorshipInquiry(id: number): Promise<void> {
+  const db = getDb();
+  await db.delete(sponsorshipInquiries).where(eq(sponsorshipInquiries.id, id));
+}
+
+export async function countSponsorshipInquiries(): Promise<number> {
+  const db = getDb();
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(sponsorshipInquiries);
   return Number(result[0]?.count ?? 0);
 }

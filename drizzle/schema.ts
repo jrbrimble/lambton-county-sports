@@ -167,3 +167,19 @@ export const alertSubscribers = pgTable("alert_subscribers", {
 
 export type AlertSubscriber = typeof alertSubscribers.$inferSelect;
 export type InsertAlertSubscriber = typeof alertSubscribers.$inferInsert;
+
+// ── Sponsorship Inquiries ──────────────────────────────────────────────────────
+
+export const sponsorshipInquiries = pgTable("sponsorship_inquiries", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  businessName: text("business_name"),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  message: text("message"),
+  status: varchar("status", { length: 32 }).default("new").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type SponsorshipInquiry = typeof sponsorshipInquiries.$inferSelect;
+export type InsertSponsorshipInquiry = typeof sponsorshipInquiries.$inferInsert;

@@ -32,6 +32,10 @@ import {
   listAlertSubscribers,
   deleteAlertSubscriber,
   countAlertSubscribers,
+  listSponsorshipInquiries,
+  updateSponsorshipInquiryStatus,
+  deleteSponsorshipInquiry,
+  countSponsorshipInquiries,
 } from "./db.js";
 import { ENV } from "./_core/env.js";
 
@@ -347,6 +351,28 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteAlertSubscriber(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ── Sponsorship Inquiries (Admin) ──────────────────────────────────────────
+  sponsors: router({
+    list: adminProcedure.query(async () => {
+      return await listSponsorshipInquiries();
+    }),
+    count: adminProcedure.query(async () => {
+      return { count: await countSponsorshipInquiries() };
+    }),
+    updateStatus: adminProcedure
+      .input(z.object({ id: z.number(), status: z.string() }))
+      .mutation(async ({ input }) => {
+        await updateSponsorshipInquiryStatus(input.id, input.status);
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSponsorshipInquiry(input.id);
         return { success: true };
       }),
   }),

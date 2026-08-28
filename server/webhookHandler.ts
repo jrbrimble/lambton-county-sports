@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { getDb } from "./db.js";
-import { sportsPrograms, alertSubscribers } from "../drizzle/schema.js";
+import { sportsPrograms, alertSubscribers, sponsorshipInquiries } from "../drizzle/schema.js";
 
 export async function programSubmissionWebhookHandler(req: Request, res: Response) {
   if (req.method === "GET" || req.method === "HEAD") {
@@ -102,6 +102,50 @@ export async function alertSubscriptionWebhookHandler(req: Request, res: Respons
 
   } catch (err: any) {
     console.error("[Webhook] Error saving subscriber:", err);
+    return res.status(500).json({ error: err.message || "Internal server error" });
+  }
+}
+
+export async function sponsorshipInquiryWebhookHandler(req: Request, res: Response) {
+  if (req.method === "GET" || req.method === "HEAD") {
+    return res.status(200).json({ ok: true, message: "Sponsorship inquiry webhook endpoint is active." });
+  }
+
+  try {
+    const data = req.body || {};
+    console.log("[Webhook] Received sponsorship inquiry:", data);
+
+    const parseField = (val: any): string => {
+      if (Array.isArray(val)) return val.join(", ").trim();
+      if (typeof val === "string") return val.trim();
+      return String(val || "").trim();
+    };
+
+    const name = parseField(data.full_name || data.fullName || data.name || data.firstName || data.first_name);
+    const businessName = parseField(data.business_name || data.businessName || data.company_name || data.companyName || data.organization);
+    const email = parseField(data.email);
+    const phone = parseField(data.phone || data.phoneNumber || data.phone_number);
+    const message = parseField(data.message || data.notes || data.comments || data.inquiry);
+
+    if (!email && !businessName && !name) {
+      return res.status(400).json({ error: "Inquiry must include contact details" });
+    }
+
+    const db = await getDb();
+    await db.insert(sponsorshipInquiries).values({
+      name: name || null,
+      businessName: businessName || null,
+      email: email || "no-email@provided.com",
+      phone: phone || null,
+      message: message || null,
+      status: "new",
+    });
+
+    console.log("[Webhook] Successfully saved sponsorship inquiry from:", businessName || name || email);
+    return res.status(200).json({ success: true, message: "Sponsorship inquiry saved successfully." });
+
+  } catch (err: any) {
+    console.error("[Webhook] Error saving sponsorship inquiry:", err);
     return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }
