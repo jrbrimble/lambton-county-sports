@@ -26,6 +26,9 @@ import {
   sportsPrograms,
   swapListings,
   users,
+  sportSponsors,
+  SportSponsor,
+  InsertSportSponsor,
 } from "../drizzle/schema.js";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -369,6 +372,67 @@ export async function deleteAdSlot(id: number): Promise<void> {
   const db = getDb();
   await db.delete(adSlots).where(eq(adSlots.id, id));
 }
+
+//  Sport Sponsors (Per-Sport Main Sponsor Banners)
+
+export async function listActiveSportSponsors(): Promise<SportSponsor[]> {
+  const db = getDb();
+  return db
+    .select()
+    .from(sportSponsors)
+    .where(eq(sportSponsors.isActive, true))
+    .orderBy(sportSponsors.sportName);
+}
+
+export async function listAllSportSponsors(): Promise<SportSponsor[]> {
+  const db = getDb();
+  return db.select().from(sportSponsors).orderBy(sportSponsors.sportName);
+}
+
+export async function getSportSponsorByName(
+  sportName: string
+): Promise<SportSponsor | undefined> {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(sportSponsors)
+    .where(
+      and(
+        eq(sportSponsors.sportName, sportName),
+        eq(sportSponsors.isActive, true)
+      )
+    )
+    .limit(1);
+  return result[0];
+}
+
+export async function createSportSponsor(
+  data: InsertSportSponsor
+): Promise<number> {
+  const db = getDb();
+  const result = await db
+    .insert(sportSponsors)
+    .values(data)
+    .returning({ id: sportSponsors.id });
+  return result[0].id;
+}
+
+export async function updateSportSponsor(
+  id: number,
+  data: Partial<InsertSportSponsor>
+): Promise<void> {
+  const db = getDb();
+  await db
+    .update(sportSponsors)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(sportSponsors.id, id));
+}
+
+export async function deleteSportSponsor(id: number): Promise<void> {
+  const db = getDb();
+  await db.delete(sportSponsors).where(eq(sportSponsors.id, id));
+}
+
 
 //  Cron Config
 

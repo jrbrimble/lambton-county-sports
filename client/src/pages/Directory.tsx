@@ -232,6 +232,15 @@ export default function Directory() {
   const { data: inlineAds } = trpc.ads.listActive.useQuery({
     position: "inline_card",
   });
+  const { data: sportSponsors } = trpc.sportSponsors.listActive.useQuery();
+
+  const currentSportSponsor = useMemo(() => {
+    if (!selectedSport || !sportSponsors) return null;
+    return sportSponsors.find(
+      s => s.sportName.toLowerCase() === selectedSport.toLowerCase() && s.isActive
+    );
+  }, [selectedSport, sportSponsors]);
+
 
   const activeFilters = [
     selectedSport && {
@@ -857,6 +866,28 @@ export default function Directory() {
                 >
                   Clear all
                 </button>
+              </div>
+            )}
+
+            {/* Sport Main Sponsor Banner (Fills main column, responsive, switches with sport filter) */}
+            {currentSportSponsor && (
+              <div className="mb-8 rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all group">
+                <a
+                  href={currentSportSponsor.destinationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block relative overflow-hidden"
+                >
+                  <div className="absolute top-3 right-3 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-sm z-10 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Official {currentSportSponsor.sportName} Sponsor
+                  </div>
+                  <img
+                    src={currentSportSponsor.imageUrl}
+                    alt={currentSportSponsor.sponsorName}
+                    className="w-full h-auto max-h-64 object-contain sm:object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+                  />
+                </a>
               </div>
             )}
 

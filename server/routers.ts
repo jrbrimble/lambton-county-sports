@@ -21,6 +21,12 @@ import {
   createAdSlot,
   updateAdSlot,
   deleteAdSlot,
+  listActiveSportSponsors,
+  listAllSportSponsors,
+  getSportSponsorByName,
+  createSportSponsor,
+  updateSportSponsor,
+  deleteSportSponsor,
   getCronConfig,
   updateCronLastRun,
   listActiveSwapListings,
@@ -190,9 +196,127 @@ export const appRouter = router({
         await deleteAdSlot(input.id);
         return { success: true };
       }),
-    uploadImage: adminProcedure.input(z.any()).mutation(async () => {
-      return { url: "/placeholder-ad.png", key: "placeholder" };
-    }),
+    uploadImage: adminProcedure
+      .input(
+        z.object({
+          base64: z.string(),
+          mimeType: z.string(),
+          filename: z.string(),
+          adId: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const { storagePut } = await import("./storage.js");
+          const buffer = Buffer.from(input.base64, "base64");
+          const safeFilename = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+          const res = await storagePut(
+            `ads/${Date.now()}_${safeFilename}`,
+            buffer,
+            input.mimeType
+          );
+          if (input.adId) {
+            await updateAdSlot(input.adId, {
+              imageUrl: res.url,
+              imageKey: res.key,
+            });
+          }
+          return { url: res.url, key: res.key };
+        } catch (err: any) {
+          console.error("Storage upload fallback:", err);
+          const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
+          if (input.adId) {
+            await updateAdSlot(input.adId, {
+              imageUrl: dataUrl,
+              imageKey: "fallback",
+            });
+          }
+          return { url: dataUrl, key: "fallback" };
+        }
+      }),
+  }),
+
+  sportSponsors: router({
+    listActive: publicProcedure.query(
+      async () => await listActiveSportSponsors()
+    ),
+    getForSport: publicProcedure
+      .input(z.object({ sport: z.string() }))
+      .query(async ({ input }) => await getSportSponsorByName(input.sport)),
+    listAll: adminProcedure.query(async () => await listAllSportSponsors()),
+    create: adminProcedure
+      .input(
+        z.object({
+          sportName: z.string().min(1),
+          sponsorName: z.string().min(1),
+          imageUrl: z.string().min(1),
+          imageKey: z.string().optional(),
+          destinationUrl: z.string().min(1),
+          isActive: z.boolean().default(true),
+        })
+      )
+      .mutation(async ({ input }) => await createSportSponsor(input)),
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          sportName: z.string().optional(),
+          sponsorName: z.string().optional(),
+          imageUrl: z.string().optional(),
+          imageKey: z.string().optional(),
+          destinationUrl: z.string().optional(),
+          isActive: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await updateSportSponsor(id, data);
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSportSponsor(input.id);
+        return { success: true };
+      }),
+    uploadImage: adminProcedure
+      .input(
+        z.object({
+          base64: z.string(),
+          mimeType: z.string(),
+          filename: z.string(),
+          sponsorId: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const { storagePut } = await import("./storage.js");
+          const buffer = Buffer.from(input.base64, "base64");
+          const safeFilename = input.filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+          const res = await storagePut(
+            `sport-sponsors/${Date.now()}_${safeFilename}`,
+            buffer,
+            input.mimeType
+          );
+          if (input.sponsorId) {
+            await updateSportSponsor(input.sponsorId, {
+              imageUrl: res.url,
+              imageKey: res.key,
+            });
+          }
+          return { url: res.url, key: res.key };
+        } catch (err: any) {
+          console.error("Storage upload fallback:", err);
+          const dataUrl = `data:${input.mimeType};base64,${input.base64}`;
+          if (input.sponsorId) {
+            await updateSportSponsor(input.sponsorId, {
+              imageUrl: dataUrl,
+              imageKey: "fallback",
+            });
+          }
+          return { url: dataUrl, key: "fallback" };
+        }
+      }),
   }),
 
   cron: router({

@@ -183,3 +183,21 @@ export const sponsorshipInquiries = pgTable("sponsorship_inquiries", {
 
 export type SponsorshipInquiry = typeof sponsorshipInquiries.$inferSelect;
 export type InsertSponsorshipInquiry = typeof sponsorshipInquiries.$inferInsert;
+
+// ── Sport Sponsors (Per-Sport Main Sponsor Banners) ──────────────────────────
+
+export const sportSponsors = pgTable("sport_sponsors", {
+  id: serial("id").primaryKey(),
+  sportName: varchar("sport_name", { length: 128 }).notNull().unique(),
+  sponsorName: varchar("sponsor_name", { length: 256 }).notNull(),
+  imageUrl: text("image_url").notNull(),
+  imageKey: text("image_key"),
+  destinationUrl: text("destination_url").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SportSponsor = typeof sportSponsors.$inferSelect;
+export type InsertSportSponsor = typeof sportSponsors.$inferInsert;
+

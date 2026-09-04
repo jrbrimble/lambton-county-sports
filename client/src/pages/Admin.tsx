@@ -61,6 +61,7 @@ import type {
   SportsProgram,
   AdSlot,
   ProgramChange,
+  SportSponsor,
 } from "../../../drizzle/schema";
 
 //  Helpers
@@ -1079,9 +1080,504 @@ function AdDialog({
   );
 }
 
-//  Ads Tab
+//  Sport Sponsors Constants
 
-function AdsTab() {
+const DIRECTORY_SPORTS = [
+  "Ice Hockey",
+  "Ball Hockey",
+  "Soccer",
+  "Lacrosse",
+  "Baseball",
+  "Softball",
+  "Gymnastics",
+  "Football",
+  "Basketball",
+  "Tennis",
+  "Golf",
+  "Swimming",
+  "Ringette",
+  "Volleyball",
+  "Curling",
+  "Sailing",
+  "Wrestling",
+  "Martial Arts",
+  "Dance",
+  "Cheerleading",
+  "Figure Skating",
+  "Power Skating",
+  "Camps",
+];
+
+const SPORT_EMOJIS: Record<string, string> = {
+  "Ice Hockey": "🏒",
+  "Ball Hockey": "🏑",
+  "Soccer": "⚽",
+  "Lacrosse": "🥍",
+  "Baseball": "⚾",
+  "Softball": "🥎",
+  "Gymnastics": "🤸",
+  "Football": "🏈",
+  "Basketball": "🏀",
+  "Tennis": "🎾",
+  "Golf": "⛳",
+  "Swimming": "🏊",
+  "Ringette": "🛼",
+  "Volleyball": "🏐",
+  "Curling": "🥌",
+  "Sailing": "⛵",
+  "Wrestling": "🤼",
+  "Martial Arts": "🥋",
+  "Dance": "💃",
+  "Cheerleading": "📣",
+  "Figure Skating": "⛸️",
+  "Power Skating": "⛸️",
+  "Camps": "🏕️",
+};
+
+interface SportSponsorFormData {
+  sportName: string;
+  sponsorName: string;
+  destinationUrl: string;
+  imageUrl: string;
+  isActive: boolean;
+}
+
+const emptySportSponsor: SportSponsorFormData = {
+  sportName: "Soccer",
+  sponsorName: "",
+  destinationUrl: "",
+  imageUrl: "",
+  isActive: true,
+};
+
+function SportSponsorDialog({
+  open,
+  onClose,
+  sponsor,
+}: {
+  open: boolean;
+  onClose: () => void;
+  sponsor?: SportSponsor;
+}) {
+  const utils = trpc.useUtils();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<SportSponsorFormData>(emptySportSponsor);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<{
+    base64: string;
+    mimeType: string;
+    filename: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (sponsor) {
+      setForm({
+        sportName: sponsor.sportName,
+        sponsorName: sponsor.sponsorName,
+        destinationUrl: sponsor.destinationUrl,
+        imageUrl: sponsor.imageUrl,
+        isActive: sponsor.isActive,
+      });
+      setImagePreview(sponsor.imageUrl);
+    } else {
+      setForm(emptySportSponsor);
+      setImagePreview(null);
+    }
+    setPendingFile(null);
+  }, [sponsor, open]);
+
+  const createMut = trpc.sportSponsors.create.useMutation({
+    onError: e => toast.error(e.message),
+  });
+  const updateMut = trpc.sportSponsors.update.useMutation({
+    onSuccess: () => {
+      utils.sportSponsors.listAll.invalidate();
+      utils.sportSponsors.listActive.invalidate();
+      toast.success("Sport sponsor updated");
+      onClose();
+    },
+    onError: e => toast.error(e.message),
+  });
+  const uploadMut = trpc.sportSponsors.uploadImage.useMutation({
+    onError: e => toast.error(e.message),
+  });
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target?.result as string;
+      const base64 = dataUrl.split(",")[1];
+      setPendingFile({ base64, mimeType: file.type, filename: file.name });
+      setImagePreview(dataUrl);
+      setForm(prev => ({ ...prev, imageUrl: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      let finalImageUrl = form.imageUrl;
+
+      if (pendingFile) {
+        const uploadRes = await uploadMut.mutateAsync(pendingFile);
+        finalImageUrl = uploadRes.url;
+      }
+
+      if (!finalImageUrl) {
+        toast.error("Please upload or provide a sponsor banner image");
+        return;
+      }
+
+      if (sponsor) {
+        await updateMut.mutateAsync({
+          id: sponsor.id,
+          ...form,
+          imageUrl: finalImageUrl,
+        });
+      } else {
+        await createMut.mutateAsync({
+          ...form,
+          imageUrl: finalImageUrl,
+        });
+        utils.sportSponsors.listAll.invalidate();
+        utils.sportSponsors.listActive.invalidate();
+        toast.success("Sport sponsor created");
+        onClose();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save sponsor");
+    }
+  }
+
+  const isPending =
+    createMut.isPending || updateMut.isPending || uploadMut.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={o => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl">
+            {sponsor ? "Edit Sport Sponsor" : "New Sport Sponsor"}
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label>Sport / Activity *</Label>
+            <Select
+              value={form.sportName}
+              onValueChange={v => setForm({ ...form, sportName: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select sport..." />
+              </SelectTrigger>
+              <SelectContent>
+                {DIRECTORY_SPORTS.map(sport => (
+                  <SelectItem key={sport} value={sport}>
+                    {SPORT_EMOJIS[sport] || "🏅"} {sport}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Sponsor / Business Name *</Label>
+            <Input
+              value={form.sponsorName}
+              onChange={e => setForm({ ...form, sponsorName: e.target.value })}
+              placeholder="e.g. Sarnia Community Sports Store"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Destination URL *</Label>
+            <Input
+              type="url"
+              value={form.destinationUrl}
+              onChange={e =>
+                setForm({ ...form, destinationUrl: e.target.value })
+              }
+              placeholder="https://..."
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label>Banner Image *</Label>
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                Rec: 1200 x 300 (4:1)
+              </span>
+            </div>
+            <div
+              className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors bg-slate-50/50"
+              onClick={() => fileRef.current?.click()}
+            >
+              {imagePreview ? (
+                <div className="space-y-2">
+                  <img
+                    src={imagePreview}
+                    alt="Banner Preview"
+                    className="w-full max-h-36 object-contain mx-auto rounded-lg shadow-xs border border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Click to replace banner image
+                  </p>
+                </div>
+              ) : (
+                <div className="py-4">
+                  <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-foreground font-medium">
+                    Click to upload banner image
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PNG, JPG, WebP recommended (1200 x 300)
+                  </p>
+                </div>
+              )}
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <div className="mt-2">
+              <Label className="text-xs text-muted-foreground">
+                Or enter image path / URL directly:
+              </Label>
+              <Input
+                value={form.imageUrl}
+                onChange={e => {
+                  setForm({ ...form, imageUrl: e.target.value });
+                  setImagePreview(e.target.value);
+                }}
+                placeholder="/dummy-soccer-sponsor.png or https://..."
+                className="text-xs mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Switch
+              checked={form.isActive}
+              onCheckedChange={v => setForm({ ...form, isActive: v })}
+            />
+            <Label>Active (shows when this sport is selected in directory)</Label>
+          </div>
+
+          <DialogFooter className="pt-3">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {sponsor ? "Save Changes" : "Create Sponsor"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SportSponsorsView() {
+  const utils = trpc.useUtils();
+  const { data: sponsors, isLoading } = trpc.sportSponsors.listAll.useQuery();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editSponsor, setEditSponsor] = useState<SportSponsor | undefined>();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const toggleMut = trpc.sportSponsors.update.useMutation({
+    onSuccess: () => {
+      utils.sportSponsors.listAll.invalidate();
+      utils.sportSponsors.listActive.invalidate();
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  const deleteMut = trpc.sportSponsors.delete.useMutation({
+    onSuccess: () => {
+      utils.sportSponsors.listAll.invalidate();
+      utils.sportSponsors.listActive.invalidate();
+      toast.success("Sport sponsor removed");
+    },
+    onError: e => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-semibold">Sport Sponsors</h2>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Main sponsor banners for each sport. When a visitor filters by that sport, their banner fills the main directory column.
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setEditSponsor(undefined);
+            setDialogOpen(true);
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Sport Sponsor
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : sponsors && sponsors.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {sponsors.map(sponsor => {
+            const emoji = SPORT_EMOJIS[sponsor.sportName] || "🏅";
+            return (
+              <div
+                key={sponsor.id}
+                className="bg-card rounded-xl border border-border overflow-hidden shadow-xs hover:border-primary/40 transition-all flex flex-col"
+              >
+                <div className="relative bg-slate-900 aspect-[4/1] overflow-hidden flex items-center justify-center">
+                  <img
+                    src={sponsor.imageUrl}
+                    alt={sponsor.sponsorName}
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-white text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-white/10">
+                    <span>{emoji}</span>
+                    <span>{sponsor.sportName}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-foreground text-base truncate">
+                          {sponsor.sponsorName}
+                        </p>
+                        <span className="text-xs text-muted-foreground">
+                          Target Sport: <strong className="text-foreground">{sponsor.sportName}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {sponsor.isActive ? "Active" : "Inactive"}
+                        </span>
+                        <Switch
+                          checked={sponsor.isActive}
+                          onCheckedChange={v =>
+                            toggleMut.mutate({ id: sponsor.id, isActive: v })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <a
+                      href={sponsor.destinationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline flex items-center gap-1 mb-4 truncate"
+                    >
+                      <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      {sponsor.destinationUrl}
+                    </a>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-border">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditSponsor(sponsor);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => setDeleteId(sponsor.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="col-span-full text-center py-16 bg-card rounded-xl border border-border">
+          <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+          <h3 className="font-display text-lg font-semibold">
+            No sport sponsors configured yet
+          </h3>
+          <p className="text-muted-foreground mt-1 max-w-md mx-auto text-sm">
+            Add a sponsor banner for sports like Soccer or Basketball to showcase dedicated local partners when visitors filter by sport.
+          </p>
+          <Button
+            className="mt-4"
+            onClick={() => {
+              setEditSponsor(undefined);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add First Sport Sponsor
+          </Button>
+        </div>
+      )}
+
+      <SportSponsorDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        sponsor={editSponsor}
+      />
+
+      <AlertDialog
+        open={deleteId !== null}
+        onOpenChange={o => !o && setDeleteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this sport sponsor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the sponsor banner for this sport from the directory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) {
+                  deleteMut.mutate({ id: deleteId });
+                  setDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
+
+function StandardAdsView() {
   const utils = trpc.useUtils();
   const { data: ads, isLoading } = trpc.ads.listAll.useQuery();
   const deleteMut = trpc.ads.delete.useMutation({
@@ -1240,6 +1736,48 @@ function AdsTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+//  Ads Tab
+
+function AdsTab() {
+  const [subTab, setSubTab] = useState<"standard" | "sports">("sports");
+  const { data: sportSponsors } = trpc.sportSponsors.listAll.useQuery();
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-8 border-b border-border pb-4">
+        <Button
+          variant={subTab === "sports" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSubTab("sports")}
+          className="gap-2"
+        >
+          Sport-Specific Sponsors
+          {sportSponsors && sportSponsors.length > 0 && (
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                subTab === "sports"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-200 text-slate-700"
+              }`}
+            >
+              {sportSponsors.length}
+            </span>
+          )}
+        </Button>
+        <Button
+          variant={subTab === "standard" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSubTab("standard")}
+        >
+          Standard Placements (Top, Bottom, Sidebar, Inline)
+        </Button>
+      </div>
+
+      {subTab === "sports" ? <SportSponsorsView /> : <StandardAdsView />}
     </div>
   );
 }
